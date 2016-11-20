@@ -18,6 +18,7 @@ defmodule Matrex.Mixfile do
   def application do
     [mod: {Matrex, []},
      applications: [
+       :ssl,
        :phoenix,
        :cowboy,
        :logger,
@@ -34,6 +35,7 @@ defmodule Matrex.Mixfile do
       {:phoenix, "~> 1.2.1"},
       {:cowboy, "~> 1.0"},
       {:comeonin, "~> 2.5"},
+      {:cors_plug, "~> 1.1"},
     ]
   end
 end

@@ -18,5 +18,7 @@ defmodule Matrex.Endpoint do
   plug Plug.MethodOverride
   plug Plug.Head
 
+  plug CORSPlug
+
   plug Matrex.Router
 end

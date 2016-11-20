@@ -8,6 +8,11 @@ use Mix.Config
 # with brunch.io to recompile .js and .css sources.
 config :matrex, Matrex.Endpoint,
   http: [port: 4000],
+  https: [port: 4443,
+    otp_app: :matrex,
+    keyfile: "priv/certs/devkey.pem",
+    certfile: "priv/certs/devcert.pem",
+  ],
   debug_errors: false,
   code_reloader: true,
   check_origin: false,
