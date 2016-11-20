@@ -21,6 +21,7 @@ defmodule Matrex.Web do
       use Phoenix.Controller
 
       import Matrex.Router.Helpers
+      import Matrex.Errors
     end
   end
 

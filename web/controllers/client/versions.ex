@@ -1,4 +1,4 @@
-defmodule Matrex.ClientVersionsController do
+defmodule Matrex.Controllers.Client.Versions do
 
   use Matrex.Web, :controller
 

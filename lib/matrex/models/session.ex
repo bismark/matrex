@@ -11,7 +11,8 @@ defmodule Matrex.Models.Session do
 
 
   def new(user) do
-    %This{user: user, expires: :erlang.monotonic_time(:second) + @expiration}
+    expires = :erlang.monotonic_time(:second) + @expiration
+    %This{user: user, expires: expires}
   end
 
 
