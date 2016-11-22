@@ -3,23 +3,22 @@ defmodule Matrex.Models.Account do
   import Comeonin.Bcrypt
 
   alias __MODULE__, as: This
+  alias Matrex.UserID
 
-
-  @type user_id :: String.t
 
   @type t :: %This{
-    username: user_id,
+    user_id: UserID.t,
     passhash: String.t,
   }
 
   defstruct [
-    :username,
+    :user_id,
     :passhash,
   ]
 
-  @spec new(user_id, String.t) :: This.t
-  def new(username, passhash) do
-    %This{username: username, passhash: passhash}
+  @spec new(UserID.t, String.t) :: This.t
+  def new(user_id, passhash) do
+    %This{user_id: user_id, passhash: passhash}
   end
 
 

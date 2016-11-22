@@ -108,14 +108,14 @@ defmodule Matrex.DB do
 
   @spec _register(map)
     :: {:ok, Sessions.tokens, Account.user_id} | {:error, atom}
-  defp _register(%{username: _} = args) do
+  defp _register(%{user_id: _} = args) do
     Agent.get_and_update(This, fn this ->
-      case Map.has_key?(this, args.username) do
+      case Map.has_key?(this, args.user_id.localpart) do
         true -> {:error, :user_in_use}
         false ->
-          {:ok, this} = _new_account(this, args.username, args.password)
-          {:ok, tokens, this} = _new_session(this, args.username)
-          {{:ok, tokens, args.username}, this}
+          {:ok, this} = _new_account(this, args.user_id, args.password)
+          {:ok, tokens, this} = _new_session(this, args.user_id.localpart)
+          {{:ok, tokens, args.user_id}, this}
       end
     end)
   end
@@ -124,7 +124,7 @@ defmodule Matrex.DB do
     Agent.get_and_update(This, fn this ->
       {:ok, user_id, this} = generate_user_id(this)
       {:ok, this} = _new_account(this, user_id, args.password)
-      {:ok, tokens, this} = _new_session(this, user_id)
+      {:ok, tokens, this} = _new_session(this, user_id.localpart)
       {{:ok, tokens, user_id}, this}
     end)
   end
@@ -140,7 +140,7 @@ defmodule Matrex.DB do
     if Map.has_key?(accounts, id) do
       _generate_user_id(id + 1 , accounts)
     else
-      id
+      UserID.new(id, Matrex.hostname)
     end
   end
 
@@ -150,13 +150,11 @@ defmodule Matrex.DB do
     {:ok, tokens, %This{this | sessions: sessions}}
   end
 
-  defp _new_account(this, username, passhash) do
-    user = Account.new(username, passhash)
-    accounts = Map.put(this.accounts, user.username, user)
+
+  defp _new_account(this, user_id, passhash) do
+    user = Account.new(user_id, passhash)
+    accounts = Map.put(this.accounts, user.user_id.localpart, user)
     {:ok, %This{this | accounts: accounts}}
   end
-
-
-
 
 end

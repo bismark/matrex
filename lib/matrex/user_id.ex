@@ -1,25 +1,39 @@
 defmodule Matrex.UserID do
 
+  alias __MODULE__, as: This
+
+  @type t :: %This{
+    localpart: String.t,
+    hostname: String.t,
+  }
+
+  defstruct [
+    :localpart,
+    :hostname,
+  ]
+
   @localpart_regex ~r|^[a-z0-9_.=\-]+$|
   @max_length 255
 
-  def valid_localpart?(username) do
-    Regex.match?(@localpart_regex, username)
+  def new(localpart, hostname) do
+    %This{localpart: localpart, hostname: hostname}
   end
 
-  def fquid(username, hostname) do
-    "@#{username}:#{hostname}"
+  def valid?(%This{} = this) do
+    Regex.match?(@localpart_regex, this.localpart) &&
+    (String.length(fquid(username, hostname)) < @max_length)
   end
 
-  def valid_fquid?(username, hostname) do
-    String.length(fquid(username, hostname)) < @max_length
+  def fquid(%This{} = this) do
+    "@#{this.localpart}:#{this.hostname}"
   end
+
 
   def parse(user) do
     case user do
       "@" <> user ->
-        [part|_] = String.split(user, ":", parts: 2, trim: true)
-        {:ok, part}
+        [localpart|hostname] = String.split(user, ":", parts: 2, trim: true)
+        {:ok, new(localpart, hostname)}
       _ -> :error
     end
   end
