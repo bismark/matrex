@@ -31,7 +31,7 @@ defmodule Matrex.Mixfile do
       {:comeonin, "~> 4.0"},
       {:pbkdf2_elixir, "~> 0.12"},
       {:cors_plug, "~> 1.1"},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
     ]
   end
 end

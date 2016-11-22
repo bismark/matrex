@@ -37,6 +37,9 @@ defmodule Matrex.DB do
     end
   end
 
+  def subscribe(args) do
+  end
+
   @spec logout(Sessions.token()) :: :ok | {:error, atom}
   def logout(access_token) do
     Agent.get_and_update(This, fn data ->
