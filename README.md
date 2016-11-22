@@ -1,4 +1,5 @@
 # Matrex
 
-A toy [Matrix][https://matrix.org] server implementation in Elixir.
+A WIP toy [Matrix](https://matrix.org) server implementation in
+Elixir.
 
