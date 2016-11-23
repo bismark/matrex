@@ -29,6 +29,8 @@ defmodule Matrex.Router do
     scope "/r0", R0 do
       pipe_through :auth
       post "/logout", Logout, :post
+
+      post "/createRoom", Room, :post
     end
   end
 

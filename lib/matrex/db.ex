@@ -1,18 +1,20 @@
 defmodule Matrex.DB do
 
   alias __MODULE__, as: This
-  alias Matrex.Models.{Account, Sessions}
+  alias Matrex.Models.{Account, Sessions, Rooms}
   alias Matrex.Identifier
 
   @type t :: %This{
     accounts: %{Account.user_id => Account.t},
     sessions: Sessions.t,
+    rooms: Rooms.t,
     next_generated_user_id: integer,
   }
 
   defstruct [
     accounts: %{},
     sessions: %Sessions{},
+    rooms: Rooms.new,
     next_generated_user_id: 1,
   ]
 
@@ -72,6 +74,23 @@ defmodule Matrex.DB do
     args = Map.update!(args, :password, &Account.hash_password/1)
     _register(args)
   end
+
+
+  @spec create_room(map, Sessions.token)
+    :: {:ok, Identifier.t} | {:error, atom}
+  def create_room(args, access_token) do
+    Agent.get_and_update(This, fn this ->
+      with {:ok, user, this} <- auth(this, access_token)
+      do
+        {room, rooms} = Rooms.create(this.rooms, args, user)
+        {{:ok, room.id}, %This{this | rooms: rooms}}
+      else
+        {:error, error, this} ->
+          {{:error, error}, this}
+      end
+    end)
+  end
+
 
   # Internal Functions
 
@@ -164,6 +183,18 @@ defmodule Matrex.DB do
     user = Account.new(user_id, passhash)
     accounts = Map.put(this.accounts, user.user_id.localpart, user)
     {:ok, %This{this | accounts: accounts}}
+  end
+
+
+  @spec auth(This.t, Session.token)
+    :: {:ok, Identifier.t, This.t} | {:error, atom, This.t}
+  defp auth(this, access_token) do
+    case Sessions.get_user(this.sessions, access_token) do
+      {:error, error, sessions} ->
+        {:error, error, %This{this | sessions: sessions}}
+      {:ok, user, sessions} ->
+        {:ok, user, %This{this | sessions: sessions}}
+    end
   end
 
 end
