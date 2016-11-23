@@ -10,7 +10,7 @@ defmodule Matrex.Models.Sessions do
 
   @type t :: %This{
     access_tokens: %{token => Session.t},
-    refresh_tokens: %{token => Account.user_id}
+    refresh_tokens: %{token => Identifier.t}
   }
 
   defstruct [
@@ -56,9 +56,9 @@ defmodule Matrex.Models.Sessions do
     do
       {:ok, session.user, this}
     else
-      {:error, :forbidden} ->
+      {:error, :unknown_token} ->
         this = invalidate_session(this, access_token)
-        {:error, :forbidden, this}
+        {:error, :unknown_token, this}
     end
   end
 
@@ -94,7 +94,7 @@ defmodule Matrex.Models.Sessions do
   @spec get_session(This.t, token) :: {:ok, Session.t} | {:error, atom}
   defp get_session(this, access_token) do
     case Map.get(this.access_tokens, access_token) do
-      nil -> {:error, :forbidden}
+      nil -> {:error, :unknown_token}
       session -> {:ok, session}
     end
   end
@@ -103,7 +103,7 @@ defmodule Matrex.Models.Sessions do
   @spec check_session(Session.t) :: :ok | {:error, atom}
   defp check_session(session) do
     case Session.expired?(session) do
-      true -> {:error, :forbidden}
+      true -> {:error, :unknown_token}
       false -> :ok
     end
   end
@@ -120,7 +120,7 @@ defmodule Matrex.Models.Sessions do
     :: {:ok, String.t, %This{}} | {:error, atom, %This{}}
   defp pop_refresh_user(this, refresh_token) do
     case Map.pop(this.refresh_tokens, refresh_token) do
-      {nil, _} -> {:error, :forbidden, this}
+      {nil, _} -> {:error, :unknown_token, this}
       {user, refresh_tokens} ->
         {:ok, user, %This{this | refresh_tokens: refresh_tokens}}
     end

@@ -5,7 +5,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
   import Matrex.Validation
 
   alias Matrex.DB
-  alias Matrex.UserID
+  alias Matrex.Identifier
   alias Matrex.Utils
 
 
@@ -15,7 +15,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
     do
       {access_token, refresh_token} = tokens
       resp = %{
-        user_id: UserID.fquid(user_id),
+        user_id: user_id,
         access_token: access_token,
         refesh_token: refresh_token,
         home_server: user_id.hostname
@@ -32,7 +32,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
     args = %{}
     with {:ok, args} <- optional(:username, params, args, type: :string, post: &check_username/1),
          {:ok, args} <- required(:password, params, args, type: :string),
-         {:ok, args} <- required(:auth, params, args, type: :map, post: &process_auth/1),
+         {:ok, args} <- required(:auth, params, args, type: :map, post: &process_auth/1)
     do
       args = Utils.map_move(args, :username, :user_id)
       {:ok, args}
@@ -49,8 +49,8 @@ defmodule Matrex.Controllers.Client.R0.Register do
 
 
   defp check_username(username) do
-    user_id = UserID.new(username, Matrex.hostname)
-    case UserID.valid?(user_id) do
+    user_id = Identifier.new(:user, username, Matrex.hostname)
+    case Identifier.valid?(user_id) do
       true -> {:ok, user_id}
       false -> {:error, :invalid_username}
     end

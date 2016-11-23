@@ -5,7 +5,7 @@ defmodule Matrex.Controllers.Client.R0.Login do
   import Matrex.Validation
 
   alias Matrex.DB
-  alias Matrex.UserID
+  alias Matrex.Identifier
 
   @login_type "m.login.password"
 
@@ -16,14 +16,14 @@ defmodule Matrex.Controllers.Client.R0.Login do
 
   def post(conn, _params) do
     with {:ok, args} <- parse_args(conn.body_params),
-         {:ok, {access_token, refresh_token}} <- DB.login(args.user, args.password)
+         {:ok, tokens, user_id} <- DB.login(args.user, args.password)
     do
-      hostname = Application.get_env(:matrex, :hostname)
+      {access_token, refresh_token} = tokens
       resp = %{
-        user_id: UserID.fquid(args.user, hostname),
+        user_id: user_id,
         access_token: access_token,
         refesh_token: refresh_token,
-        home_server: hostname
+        home_server: user_id.hostname
       }
       json(conn, resp)
     else
@@ -51,9 +51,10 @@ defmodule Matrex.Controllers.Client.R0.Login do
   defp validate_type(_), do: {:error, :unknown}
 
 
+  @spec parse_user(String.t) :: {:ok, Identifier.t | String.t}
   defp parse_user(user) do
-    case UserID.parse(user) do
-      :error -> {:error, :bad_type}
+    case Identifier.parse(user, :user) do
+      :error -> {:ok, user}
       res -> res
     end
   end
