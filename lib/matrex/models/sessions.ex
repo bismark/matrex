@@ -10,7 +10,7 @@ defmodule Matrex.Models.Sessions do
 
   @type t :: %This{
     access_tokens: %{token => Session.t},
-    refresh_tokens: %{token => Identifier.t}
+    refresh_tokens: %{token => Identifier.user}
   }
 
   defstruct [

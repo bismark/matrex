@@ -29,8 +29,8 @@ defmodule Matrex.DB do
   end
 
 
-  @spec login(Identifier.t | String.t, String.t)
-    :: {:ok, Sessions.tokens, Identifier.t} | {:error, atom}
+  @spec login(Identifier.user | String.t, String.t)
+    :: {:ok, Sessions.tokens, Identifier.user} | {:error, atom}
   def login(user_id, password) do
     with {:ok, user_id} <- check_password(user_id, password) do
       {:ok, tokens} = new_session(user_id)
@@ -75,8 +75,8 @@ defmodule Matrex.DB do
 
   # Internal Functions
 
-  @spec check_password(Identifier.t | String.t, String.t)
-    :: {:ok, Identifier.t} | {:error, atom}
+  @spec check_password(Identifier.user | String.t, String.t)
+    :: {:ok, Identifier.user} | {:error, atom}
   defp check_password(user_id, password) do
     account = Agent.get(This, fn this ->
       username = case user_id do
@@ -98,7 +98,7 @@ defmodule Matrex.DB do
     end
   end
 
-  @spec new_session(Identifier.t) :: {:ok, Sessions.tokens}
+  @spec new_session(Identifier.user) :: {:ok, Sessions.tokens}
   defp new_session(user_id) do
     Agent.get_and_update(This, fn this ->
       {:ok, tokens, this} = new_session(this, user_id)
@@ -134,14 +134,14 @@ defmodule Matrex.DB do
   # Internal This Functions
 
 
-  @spec generate_user_id(This.t) :: {:ok, Identifier.t, This.t}
+  @spec generate_user_id(This.t) :: {:ok, Identifier.user, This.t}
   defp generate_user_id(this) do
     id = generate_user_id(this.next_generated_user_id, this.accounts)
     {:ok, id, %This{this | next_generated_user_id: id + 1}}
   end
 
 
-  @spec generate_user_id(integer, map) :: Identifier.t
+  @spec generate_user_id(integer, map) :: Identifier.user
   defp generate_user_id(id, accounts) do
     if Map.has_key?(accounts, id) do
       generate_user_id(id + 1 , accounts)
@@ -151,7 +151,7 @@ defmodule Matrex.DB do
   end
 
 
-  @spec new_session(This.t, Identifier.t)
+  @spec new_session(This.t, Identifier.user)
     :: {:ok, Sessions.tokens, This.t}
   defp new_session(this, user) do
     {:ok, tokens, sessions} = Sessions.new_session(this.sessions, user)
@@ -159,7 +159,7 @@ defmodule Matrex.DB do
   end
 
 
-  @spec new_account(This.t, Identifier.t, String.t) :: {:ok, This.t}
+  @spec new_account(This.t, Identifier.user, String.t) :: {:ok, This.t}
   defp new_account(this, user_id, passhash) do
     user = Account.new(user_id, passhash)
     accounts = Map.put(this.accounts, user.user_id.localpart, user)

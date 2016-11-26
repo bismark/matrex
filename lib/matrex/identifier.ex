@@ -13,6 +13,26 @@ defmodule Matrex.Identifier do
 
   @id_length 18
 
+  @type user :: %This{
+    type: :user,
+    localpart: String.t,
+    hostname: String.t,
+  }
+  @type room :: %This{
+    type: :room,
+    localpart: String.t,
+    hostname: String.t,
+  }
+  @type event :: %This{
+    type: :event,
+    localpart: String.t,
+    hostname: String.t,
+  }
+  @type room_alias :: %This{
+    type: :room_alias,
+    localpart: String.t,
+    hostname: String.t,
+  }
   @type t :: %This{
     type: atom,
     localpart: String.t,

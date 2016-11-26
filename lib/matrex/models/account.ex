@@ -7,7 +7,7 @@ defmodule Matrex.Models.Account do
 
 
   @type t :: %This{
-    user_id: Identifier.t,
+    user_id: Identifier.user,
     passhash: String.t,
   }
 
@@ -16,7 +16,7 @@ defmodule Matrex.Models.Account do
     :passhash,
   ]
 
-  @spec new(Identifier.t, String.t) :: This.t
+  @spec new(Identifier.user, String.t) :: This.t
   def new(user_id, passhash) do
     %This{user_id: user_id, passhash: passhash}
   end
