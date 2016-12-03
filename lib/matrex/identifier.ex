@@ -84,8 +84,8 @@ defmodule Matrex.Identifier do
     with {:ok, type, id} <- type_from_sigil(id)
     do
       case type do
-        ^expected -> 
-          [localpart|hostname] = String.split(id, ":", parts: 2, trim: true)
+        ^expected ->
+          [localpart, hostname] = String.split(id, ":", parts: 2, trim: true)
           {:ok, new(type, localpart, hostname)}
         _ -> :error
       end
