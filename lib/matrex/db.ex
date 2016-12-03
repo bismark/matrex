@@ -77,13 +77,28 @@ defmodule Matrex.DB do
 
 
   @spec create_room(map, Sessions.token)
-    :: {:ok, Identifier.t} | {:error, atom}
+    :: {:ok, Identifier.room} | {:error, atom}
   def create_room(args, access_token) do
     Agent.get_and_update(This, fn this ->
       with {:ok, user, this} <- auth(this, access_token)
       do
-        {room, rooms} = Rooms.create(this.rooms, args, user)
-        {{:ok, room.id}, %This{this | rooms: rooms}}
+        {room_id, rooms} = Rooms.create(this.rooms, args, user)
+        {{:ok, room_id}, %This{this | rooms: rooms}}
+      else
+        {:error, error, this} ->
+          {{:error, error}, this}
+      end
+    end)
+  end
+
+  @spec join_room(Identifier.room, Sessions.token)
+    :: {:ok, Identifier.room} | {:error, atom}
+  def join_room(room_id, access_token) do
+    Agent.get_and_update(This, fn this ->
+      with {:ok, user, this} <- auth(this, access_token),
+           {:ok, room_id, this} <- join_room(this, room_id, user)
+      do
+        {{:ok, room_id}, this}
       else
         {:error, error, this} ->
           {{:error, error}, this}
@@ -194,6 +209,18 @@ defmodule Matrex.DB do
         {:error, error, %This{this | sessions: sessions}}
       {:ok, user, sessions} ->
         {:ok, user, %This{this | sessions: sessions}}
+    end
+  end
+
+
+  @spec join_room(This.t, Identifier.room, Identifier.user)
+    :: {:ok, Identifier.room, This.t} | {:error, atom, This.t}
+  def join_room(this, room_id, user) do
+    case Rooms.join_room(this.rooms, room_id, user) do
+      {:error, error} ->
+        {:error, error, this}
+      {:ok, rooms} ->
+        {:ok, room_id, %This{this | rooms: rooms}}
     end
   end
 

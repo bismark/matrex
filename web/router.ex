@@ -30,7 +30,9 @@ defmodule Matrex.Router do
       pipe_through :auth
       post "/logout", Logout, :post
 
-      post "/createRoom", Room, :post
+      post "/createRoom", CreateRoom, :post
+
+      post "/rooms/:room_id/join", Room, :join
     end
   end
 
