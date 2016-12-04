@@ -1,4 +1,4 @@
-defmodule Matrex.Controllers.Client.R0.Room do
+defmodule Matrex.Controllers.Client.R0.Rooms.Join do
 
   use Matrex.Web, :controller
 
@@ -7,7 +7,7 @@ defmodule Matrex.Controllers.Client.R0.Room do
   alias Matrex.Identifier
   alias Matrex.DB
 
-  def join(conn, params) do
+  def post(conn, params) do
     access_token = conn.assigns[:access_token]
     with {:ok, args} <- parse_args(params),
          {:ok, room_id} <- DB.join_room(args.room_id, access_token)
@@ -22,10 +22,8 @@ defmodule Matrex.Controllers.Client.R0.Room do
 
   defp parse_args(args) do
     acc = %{}
-    with {:ok, acc} <- required(:room_id, args, acc, type: :string, post: &parse_room_id/1)
-    do
-        {:ok, acc}
-    end
+    with {:ok, acc} <- required(:room_id, args, acc, type: :string, post: &parse_room_id/1),
+    do: {:ok, acc}
   end
 
 

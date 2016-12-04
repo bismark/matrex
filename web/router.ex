@@ -32,7 +32,9 @@ defmodule Matrex.Router do
 
       post "/createRoom", CreateRoom, :post
 
-      post "/rooms/:room_id/join", Room, :join
+      scope "/rooms", Rooms do
+        post "/:room_id/join", Join, :post
+      end
     end
   end
 
