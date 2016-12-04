@@ -34,9 +34,9 @@ defmodule This do
   }
 
   @message_types %{
-    "m.room.redaction" => This.Redaction,
+    #"m.room.redaction" => This.Redaction,
     "m.room.message" => This.Message,
-    "m.room.message.feedback" => This.MessageFeedback,
+    #"m.room.message.feedback" => This.MessageFeedback,
   }
 
 
@@ -49,6 +49,19 @@ defmodule This do
     case Map.fetch(@state_types, type) do
       :error -> This.UnknownState.factory(type)
       {:ok, type} -> &type.from_raw/2
+    end
+  end
+
+
+  def content_type(type) do
+    Map.get(@message_types, type, This.UnknownContent)
+  end
+
+
+  def content_factory(type) do
+    case Map.fetch(@message_types, type) do
+      :error -> This.UnknownContent.factory(type)
+      {:ok, type} -> &type.from_raw/1
     end
   end
 
@@ -71,6 +84,11 @@ defmodule This.StateContentBehaviour do
 end
 
 
+defmodule This.ContentBehaviour do
+  @callback from_raw(content :: map) :: {:ok, struct} | {:error, atom}
+end
+
+
 defprotocol This.Content do
 
   @spec type(Content.t) :: String.t
@@ -79,7 +97,7 @@ defprotocol This.Content do
   @spec is_state?(Content.t) :: boolean
   def is_state?(content)
 
-  @spec state_key(Content.t) :: String.t
+  @spec state_key(Content.t) :: String.t | nil
   def state_key(content)
 
   @spec output(Content.t) :: map

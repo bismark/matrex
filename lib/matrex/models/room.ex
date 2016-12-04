@@ -66,6 +66,21 @@ defmodule Matrex.Models.Room do
   end
 
 
+  @spec send_event(This.t, Identifier.user, RoomEvent.Content.t)
+    :: {:ok, Identifier.event, This.t} | {:error, atom}
+  def send_event(this, user, content) do
+    case MapSet.member?(this.state.joined_members, user) do
+      false -> {:error, :forbidden}
+      true ->
+        event = RoomEvent.create(this.id, user, content)
+        this = %This{this | events: [event|this.events]}
+        {:ok, event.event_id, this}
+    end
+  end
+
+
+  # Internal Funcs
+
   @spec update_state(This.t, [RoomEvent.t]) :: This.t
   defp update_state(this, []), do: this
   defp update_state(this, [%RoomEvent{content: %JoinRules{join_rule: rule}}|rest]) do

@@ -34,6 +34,7 @@ defmodule Matrex.Router do
 
       scope "/rooms", Rooms do
         post "/:room_id/join", Join, :post
+        put "/:room_id/send/:event_type/:txn_id", Send, :put
       end
     end
   end

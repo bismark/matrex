@@ -3,6 +3,7 @@ defmodule Matrex.DB do
   alias __MODULE__, as: This
   alias Matrex.Models.{Account, Sessions, Rooms}
   alias Matrex.Identifier
+  alias Matrex.Events.Room, as: RoomEvent
 
   @type t :: %This{
     accounts: %{Account.user_id => Account.t},
@@ -76,13 +77,13 @@ defmodule Matrex.DB do
   end
 
 
-  @spec create_room(map, Sessions.token)
+  @spec create_room([RoomEvent.Content.t], Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
-  def create_room(args, access_token) do
+  def create_room(contents, access_token) do
     Agent.get_and_update(This, fn this ->
       with {:ok, user, this} <- auth(this, access_token)
       do
-        {room_id, rooms} = Rooms.create(this.rooms, args, user)
+        {room_id, rooms} = Rooms.create(this.rooms, contents, user)
         {{:ok, room_id}, %This{this | rooms: rooms}}
       else
         {:error, error, this} ->
@@ -90,6 +91,7 @@ defmodule Matrex.DB do
       end
     end)
   end
+
 
   @spec join_room(Identifier.room, Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
@@ -99,6 +101,23 @@ defmodule Matrex.DB do
            {:ok, room_id, this} <- join_room(this, room_id, user)
       do
         {{:ok, room_id}, this}
+      else
+        {:error, error, this} ->
+          {{:error, error}, this}
+      end
+    end)
+  end
+
+
+  @spec send_event(Identifier.room, String.t, RoomEvent.Content.t, Sessions.token)
+    :: {:ok, Identifier.event} | {:error, atom}
+  def send_event(room_id, _txn_id, content, access_token) do
+    #TODO deal with txn_id
+    Agent.get_and_update(This, fn this ->
+      with {:ok, user, this} <- auth(this, access_token),
+           {:ok, event_id, this} <- _send_event(this, room_id, user, content)
+      do
+        {{:ok, event_id}, this}
       else
         {:error, error, this} ->
           {{:error, error}, this}
@@ -215,12 +234,24 @@ defmodule Matrex.DB do
 
   @spec join_room(This.t, Identifier.room, Identifier.user)
     :: {:ok, Identifier.room, This.t} | {:error, atom, This.t}
-  def join_room(this, room_id, user) do
+  defp join_room(this, room_id, user) do
     case Rooms.join_room(this.rooms, room_id, user) do
       {:error, error} ->
         {:error, error, this}
       {:ok, rooms} ->
         {:ok, room_id, %This{this | rooms: rooms}}
+    end
+  end
+
+
+  @spec _send_event(This.t, Identifier.room, Identifier.user, struct)
+    :: {:ok, Identifier.event, This.t} | {:error, atom, This.t}
+  defp _send_event(this, room_id, user, content) do
+    case Rooms.send_event(this.rooms, room_id, user, content) do
+      {:error, error} ->
+        {:error, error, this}
+      {:ok, event_id, rooms} ->
+        {:ok, event_id, %This{this | rooms: rooms}}
     end
   end
 

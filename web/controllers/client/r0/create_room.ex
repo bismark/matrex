@@ -16,12 +16,10 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
   }
 
 
-
-
   def post(conn, _params) do
     access_token = conn.assigns[:access_token]
     with {:ok, args} <- parse_args(conn.body_params),
-         {:ok, room_id} <- DB.create_room(args, access_token)
+         {:ok, room_id} <- DB.create_room(args.contents, access_token)
     do
       json(conn, %{room_id: room_id})
     else
@@ -145,8 +143,6 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
   end
 
   defp gen_preset_content(acc, _), do: acc
-
-
 
 
 end
