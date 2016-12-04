@@ -16,13 +16,9 @@ defmodule This do
   def new(topic) when is_binary(topic), do: %This{topic: topic}
 
 
-  def new(args, _) do
-    with {:ok, %{topic: topic}} <- required(:topic, args, %{}, type: :string)
-    do
-      {:ok, new(topic)}
-    else
-      {:error, _} -> :error
-    end
+  def from_raw(args, _) do
+    with {:ok, %{topic: topic}} <- required(:topic, args, %{}, type: :string),
+    do: {:ok, new(topic)}
   end
 
 end

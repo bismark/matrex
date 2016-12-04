@@ -21,16 +21,16 @@ defmodule This do
   ]
 
   @state_types %{
-    "m.room.aliases" => This.Aliases,
-    "m.room.canonical_alias" => This.CanonicalAlias,
+    #"m.room.aliases" => This.Aliases,
+    #"m.room.canonical_alias" => This.CanonicalAlias,
     "m.room.create" => This.Create,
     "m.room.history_visibility" => This.HistoryVisibility,
     "m.room.join_rules" => This.JoinRules,
     "m.room.member" => This.Member,
     "m.room.name" => This.Name,
-    "m.room.power_levels" => This.PowerLevels,
+    #"m.room.power_levels" => This.PowerLevels,
     "m.room.topic" => This.Topic,
-    "m.room.avatar" => This.Avatar,
+    #"m.room.avatar" => This.Avatar,
   }
 
   @message_types %{
@@ -44,10 +44,11 @@ defmodule This do
     Map.get(@state_types, type, This.UnknownState)
   end
 
+
   def state_content_factory(type) do
     case Map.fetch(@state_types, type) do
       :error -> This.UnknownState.factory(type)
-      {:ok, type} -> &type.new/2
+      {:ok, type} -> &type.from_raw/2
     end
   end
 
@@ -66,7 +67,7 @@ end
 
 
 defmodule This.StateContentBehaviour do
-  @callback new(content :: map, state_key :: String.t) :: {:ok, struct} | :error
+  @callback from_raw(content :: map, state_key :: String.t) :: {:ok, struct} | {:error, atom}
 end
 
 

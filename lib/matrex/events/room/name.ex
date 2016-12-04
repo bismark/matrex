@@ -16,14 +16,9 @@ defmodule This do
   def new(name) when is_binary(name), do: %This{name: name}
 
 
-  def new(args, _) do
-    with {:ok, %{name: name}} <- required(:name, args, %{}, type: :string)
-    do
-      {:ok, new(name)}
-    else
-      {:error,_} ->
-        :error
-    end
+  def from_raw(args, _) do
+    with {:ok, %{name: name}} <- required(:name, args, %{}, type: :string),
+    do: {:ok, new(name)}
   end
 
 end

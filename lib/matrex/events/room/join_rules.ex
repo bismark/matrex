@@ -20,15 +20,10 @@ defmodule This do
   end
 
 
-  def new(args, _) do
+  def from_raw(args, _) do
     with options = [type: :string, as: :atom, allowed: @allowed],
-         {:ok, %{join_rule: rule}} <- required(:join_rule, args, %{}, options)
-    do
-      {:ok, new(rule)}
-    else
-      {:error, _} ->
-        :error
-    end
+         {:ok, %{join_rule: rule}} <- required(:join_rule, args, %{}, options),
+     do: {:ok, new(rule)}
   end
 
 end

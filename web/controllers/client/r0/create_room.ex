@@ -115,7 +115,7 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
           content_factory = RoomEvent.state_content_factory(state.type)
           case content_factory.(state.content, state.state_key) do
             {:ok, content} -> [content|acc]
-            :error -> acc
+            {:error, _} -> acc
           end
       end
     end)

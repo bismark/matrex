@@ -20,14 +20,10 @@ defmodule This do
   end
 
 
-  def new(args, _) do
+  def from_raw(args, _) do
     with options = [type: :string, as: :atom, allowed: @allowed],
-         {:ok, %{history_visibility: v}} <- required(:history_visibility, args, %{}, options)
-    do
-      {:ok, new(v)}
-    else
-      {:error, _} -> :error
-    end
+         {:ok, %{history_visibility: v}} <- required(:history_visibility, args, %{}, options),
+    do: {:ok, new(v)}
   end
 
 
