@@ -11,7 +11,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
 
   def post(conn, _params) do
     with {:ok, args} <- parse_args(conn.body_params),
-         {:ok, tokens, user_id} <- DB.register(args)
+         {:ok, {tokens, user_id}} <- DB.register(args.user_id, args.password)
     do
       {access_token, refresh_token} = tokens
       resp = %{
@@ -30,7 +30,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
 
   defp parse_args(params) do
     args = %{}
-    with {:ok, args} <- optional(:username, params, args, type: :string, post: &check_username/1),
+    with {:ok, args} <- optional(:username, params, args, type: :string, post: &check_username/1, default: nil),
          {:ok, args} <- required(:password, params, args, type: :string),
          {:ok, args} <- required(:auth, params, args, type: :map, post: &process_auth/1)
     do

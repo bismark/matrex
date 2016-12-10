@@ -16,7 +16,7 @@ defmodule Matrex.Controllers.Client.R0.Login do
 
   def post(conn, _params) do
     with {:ok, args} <- parse_args(conn.body_params),
-         {:ok, tokens, user_id} <- DB.login(args.user, args.password)
+         {:ok, {tokens, user_id}} <- DB.login(args.user, args.password)
     do
       {access_token, refresh_token} = tokens
       resp = %{
@@ -54,7 +54,7 @@ defmodule Matrex.Controllers.Client.R0.Login do
   @spec parse_user(String.t) :: {:ok, Identifier.user | String.t}
   defp parse_user(user) do
     case Identifier.parse(user, :user) do
-      :error -> {:ok, user}
+      :error -> {:ok, Identifier.new(:user, user)}
       res -> res
     end
   end

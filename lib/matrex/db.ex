@@ -1,56 +1,39 @@
 defmodule Matrex.DB do
 
   alias __MODULE__, as: This
-  alias Matrex.Models.{Account, Sessions, Rooms}
+  alias Matrex.DB.Data
+  alias Matrex.Models.{Account, Sessions}
   alias Matrex.Identifier
   alias Matrex.Events.Room, as: RoomEvent
 
-  @type t :: %This{
-    accounts: %{Account.user_id => Account.t},
-    sessions: Sessions.t,
-    rooms: Rooms.t,
-    next_generated_user_id: integer,
-  }
-
-  defstruct [
-    accounts: %{},
-    sessions: %Sessions{},
-    rooms: Rooms.new,
-    next_generated_user_id: 1,
-  ]
-
-
   @doc "For debugging purposes"
-  @spec dump :: This.t
+  @spec dump :: Data.t
   def dump do
-    Agent.get(This, fn this -> this end)
+    Agent.get(This, fn data -> data end)
   end
 
 
   def start_link do
-    Agent.start_link(fn -> %This{} end, name: This)
+    Agent.start_link(fn -> %Data{} end, name: This)
   end
 
 
   @spec login(Identifier.user | String.t, String.t)
-    :: {:ok, Sessions.tokens, Identifier.user} | {:error, atom}
+    :: {:ok, {Sessions.tokens, Identifier.user}} | {:error, atom}
   def login(user_id, password) do
     with {:ok, user_id} <- check_password(user_id, password) do
       {:ok, tokens} = new_session(user_id)
-      {:ok, tokens, user_id}
+      {:ok, {tokens, user_id}}
     end
   end
 
 
   @spec logout(Sessions.token) :: :ok | {:error, atom}
   def logout(access_token) do
-    Agent.get_and_update(This, fn this ->
-      case Sessions.remove_session(this.sessions, access_token) do
-        {:error, sessions} ->
-          {{:error, :unknown_token}, %This{this | sessions: sessions}}
-        {:ok, sessions} ->
-          {:ok, %This{this | sessions: sessions}}
-      end
+    Agent.get_and_update(This, fn data ->
+      data
+        |> Data.logout(access_token)
+        |> wrap_result
     end)
   end
 
@@ -58,37 +41,34 @@ defmodule Matrex.DB do
   @spec refresh_auth(Sessions.token)
     :: {:ok, Sessions.tokens} | {:error, atom}
   def refresh_auth(refresh_token) do
-    Agent.get_and_update(This, fn this ->
-      case Sessions.refresh_session(this.sessions, refresh_token) do
-        {:error, error, sessions} ->
-          {{:error, error}, %This{this | sessions: sessions}}
-        {:ok, tokens, sessions} ->
-          {{:ok, tokens}, %This{this | sessions: sessions}}
-      end
+    Agent.get_and_update(This, fn data ->
+      data
+        |> Data.refresh_auth(refresh_token)
+        |> wrap_result
     end)
   end
 
 
-  @spec register(map)
-    :: {:ok, Sessions.tokens, Account.user_id} | {:error, atom}
-  def register(args) do
-    args = Map.update!(args, :password, &Account.hash_password/1)
-    _register(args)
+  @spec register(Identifier.user | nil, String.t)
+    :: {:ok, {Sessions.tokens, Identifier.user_id}} | {:error, atom}
+  def register(user_id_or_nil, password) do
+    passhash = Account.hash_password(password)
+    Agent.get_and_update(This, fn data ->
+      data
+        |> Data.register(user_id_or_nil, passhash)
+        |> wrap_result
+    end)
   end
 
 
   @spec create_room([RoomEvent.Content.t], Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
   def create_room(contents, access_token) do
-    Agent.get_and_update(This, fn this ->
-      with {:ok, user, this} <- auth(this, access_token)
-      do
-        {room_id, rooms} = Rooms.create(this.rooms, contents, user)
-        {{:ok, room_id}, %This{this | rooms: rooms}}
-      else
-        {:error, error, this} ->
-          {{:error, error}, this}
+    Agent.get_and_update(This, fn data ->
+      with {:ok, user, data} <- Data.auth(data, access_token) do
+        Data.create_room(data, contents, user)
       end
+        |> wrap_result
     end)
   end
 
@@ -96,15 +76,11 @@ defmodule Matrex.DB do
   @spec join_room(Identifier.room, Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
   def join_room(room_id, access_token) do
-    Agent.get_and_update(This, fn this ->
-      with {:ok, user, this} <- auth(this, access_token),
-           {:ok, room_id, this} <- join_room(this, room_id, user)
-      do
-        {{:ok, room_id}, this}
-      else
-        {:error, error, this} ->
-          {{:error, error}, this}
+    Agent.get_and_update(This, fn data ->
+      with {:ok, user, data} <- Data.auth(data, access_token) do
+        Data.join_room(data, room_id, user)
       end
+        |> wrap_result
     end)
   end
 
@@ -113,30 +89,22 @@ defmodule Matrex.DB do
     :: {:ok, Identifier.event} | {:error, atom}
   def send_event(room_id, _txn_id, content, access_token) do
     #TODO deal with txn_id
-    Agent.get_and_update(This, fn this ->
-      with {:ok, user, this} <- auth(this, access_token),
-           {:ok, event_id, this} <- _send_event(this, room_id, user, content)
-      do
-        {{:ok, event_id}, this}
-      else
-        {:error, error, this} ->
-          {{:error, error}, this}
+    Agent.get_and_update(This, fn data ->
+      with {:ok, user, data} <- Data.auth(data, access_token) do
+        Data.send_event(data, room_id, user, content)
       end
+        |> wrap_result
     end)
   end
 
 
   # Internal Functions
 
-  @spec check_password(Identifier.user | String.t, String.t)
+  @spec check_password(Identifier.user, String.t)
     :: {:ok, Identifier.user} | {:error, atom}
   defp check_password(user_id, password) do
-    account = Agent.get(This, fn this ->
-      username = case user_id do
-        %Identifier{localpart: localpart} -> localpart
-        username -> username
-      end
-      Map.fetch(this.accounts, username)
+    account = Agent.get(This, fn data ->
+      Data.fetch_account(data, user_id)
     end)
 
     case account do
@@ -153,106 +121,20 @@ defmodule Matrex.DB do
 
   @spec new_session(Identifier.user) :: {:ok, Sessions.tokens}
   defp new_session(user_id) do
-    Agent.get_and_update(This, fn this ->
-      {:ok, tokens, this} = new_session(this, user_id)
-      {{:ok, tokens}, this}
+    Agent.get_and_update(This, fn data ->
+      Data.new_session(data, user_id)
+        |> wrap_result
     end)
   end
 
 
-  @spec _register(map)
-    :: {:ok, Sessions.tokens, Account.user_id} | {:error, atom}
-  defp _register(%{user_id: _} = args) do
-    Agent.get_and_update(This, fn this ->
-      case Map.has_key?(this, args.user_id.localpart) do
-        true -> {:error, :user_in_use}
-        false ->
-          {:ok, this} = new_account(this, args.user_id, args.password)
-          {:ok, tokens, this} = new_session(this, args.user_id)
-          {{:ok, tokens, args.user_id}, this}
-      end
-    end)
-  end
+  # Internal Functions
 
-  defp _register(args) do
-    Agent.get_and_update(This, fn this ->
-      {:ok, user_id, this} = generate_user_id(this)
-      {:ok, this} = new_account(this, user_id, args.password)
-      {:ok, tokens, this} = new_session(this, user_id)
-      {{:ok, tokens, user_id}, this}
-    end)
-  end
+  defp wrap_result({:error, error, data}), do: {{:error, error}, data}
 
+  defp wrap_result({:ok, data}), do: {:ok, data}
 
-  # Internal This Functions
+  defp wrap_result({:ok, res, data}), do: {{:ok, res}, data}
 
-
-  @spec generate_user_id(This.t) :: {:ok, Identifier.user, This.t}
-  defp generate_user_id(this) do
-    id = generate_user_id(this.next_generated_user_id, this.accounts)
-    {:ok, id, %This{this | next_generated_user_id: id + 1}}
-  end
-
-
-  @spec generate_user_id(integer, map) :: Identifier.user
-  defp generate_user_id(id, accounts) do
-    if Map.has_key?(accounts, id) do
-      generate_user_id(id + 1 , accounts)
-    else
-      Identifier.new(:user, id, Matrex.hostname)
-    end
-  end
-
-
-  @spec new_session(This.t, Identifier.user)
-    :: {:ok, Sessions.tokens, This.t}
-  defp new_session(this, user) do
-    {:ok, tokens, sessions} = Sessions.new_session(this.sessions, user)
-    {:ok, tokens, %This{this | sessions: sessions}}
-  end
-
-
-  @spec new_account(This.t, Identifier.user, String.t) :: {:ok, This.t}
-  defp new_account(this, user_id, passhash) do
-    user = Account.new(user_id, passhash)
-    accounts = Map.put(this.accounts, user.user_id.localpart, user)
-    {:ok, %This{this | accounts: accounts}}
-  end
-
-
-  @spec auth(This.t, Session.token)
-    :: {:ok, Identifier.t, This.t} | {:error, atom, This.t}
-  defp auth(this, access_token) do
-    case Sessions.get_user(this.sessions, access_token) do
-      {:error, error, sessions} ->
-        {:error, error, %This{this | sessions: sessions}}
-      {:ok, user, sessions} ->
-        {:ok, user, %This{this | sessions: sessions}}
-    end
-  end
-
-
-  @spec join_room(This.t, Identifier.room, Identifier.user)
-    :: {:ok, Identifier.room, This.t} | {:error, atom, This.t}
-  defp join_room(this, room_id, user) do
-    case Rooms.join_room(this.rooms, room_id, user) do
-      {:error, error} ->
-        {:error, error, this}
-      {:ok, rooms} ->
-        {:ok, room_id, %This{this | rooms: rooms}}
-    end
-  end
-
-
-  @spec _send_event(This.t, Identifier.room, Identifier.user, struct)
-    :: {:ok, Identifier.event, This.t} | {:error, atom, This.t}
-  defp _send_event(this, room_id, user, content) do
-    case Rooms.send_event(this.rooms, room_id, user, content) do
-      {:error, error} ->
-        {:error, error, this}
-      {:ok, event_id, rooms} ->
-        {:ok, event_id, %This{this | rooms: rooms}}
-    end
-  end
 
 end
