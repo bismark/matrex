@@ -22,14 +22,14 @@ defmodule Matrex.Models.SessionsTest do
     assert {:ok, {access_token, _}, sessions} = Sessions.new_session(%Sessions{}, username)
 
     # Ensure bad token return error
-    assert {:error, :forbidden, ^sessions} = Sessions.get_user(sessions, "badtoken")
+    assert {:error, :unknown_token, ^sessions} = Sessions.get_user(sessions, "badtoken")
 
     # Ensure lookup works correctly
     assert {:ok, ^username, ^sessions} = Sessions.get_user(sessions, access_token)
 
     # Ensure expired session is invalidated
     sessions = expire_session(sessions, access_token)
-    assert {:error, :forbidden, sessions_2} = Sessions.get_user(sessions, access_token)
+    assert {:error, :unknown_token, sessions_2} = Sessions.get_user(sessions, access_token)
     assert not Map.has_key?(sessions_2.access_tokens, access_token)
   end
 
@@ -49,7 +49,7 @@ defmodule Matrex.Models.SessionsTest do
     assert {:ok, ^username, ^sessions} = Sessions.get_user(sessions, access_token_2)
 
     # Previous refresh token is invalidated
-    assert {:error, :forbidden, ^sessions} = Sessions.refresh_session(sessions, refresh_token)
+    assert {:error, :unknown_token, ^sessions} = Sessions.refresh_session(sessions, refresh_token)
 
     # One more time for safety
     assert {:ok, _, _} = Sessions.refresh_session(sessions, refresh_token_2)

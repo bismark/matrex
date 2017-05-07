@@ -3,7 +3,7 @@ defmodule Matrex.Utils do
 
   def timestamp, do: :os.system_time(:millisecond)
 
-  def age(since), do: timestamp - since
+  def age(since), do: timestamp() - since
 
 
   def map_move(map, old_key, new_key) do

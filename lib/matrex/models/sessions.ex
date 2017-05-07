@@ -24,11 +24,11 @@ defmodule Matrex.Models.Sessions do
 
   @spec new_session(This.t, Account.user_id) :: {:ok, tokens, This.t}
   def new_session(this, user) do
-    access_token = create_token
-    refresh_token = create_token
+    access_token = create_token()
+    refresh_token = create_token()
 
     access_tokens = Map.put(
-      this.access_tokens, 
+      this.access_tokens,
       access_token,
       Session.new(user)
     )
