@@ -6,7 +6,7 @@ defmodule Matrex.DB.Data do
   alias Matrex.Events.Room, as: RoomEvent
 
   @type t :: %This{
-    accounts: %{Account.user_id => Account.t},
+    accounts: %{Identifier.user => Account.t},
     sessions: Sessions.t,
     rooms: Rooms.t,
     next_generated_user_id: integer,
@@ -72,7 +72,7 @@ defmodule Matrex.DB.Data do
   end
 
 
-  @spec refresh_auth(This.t, Sessions.toen)
+  @spec refresh_auth(This.t, Sessions.token)
     :: {:ok, Sessions.tokens, This.t} | {:error, atom, This.t}
 
   def refresh_auth(this, refresh_token) do
@@ -85,7 +85,7 @@ defmodule Matrex.DB.Data do
   end
 
 
-  @spec auth(This.t, Session.token)
+  @spec auth(This.t, Sessions.token)
     :: {:ok, Identifier.t, This.t} | {:error, atom, This.t}
 
   def auth(this, access_token) do
@@ -98,7 +98,7 @@ defmodule Matrex.DB.Data do
   end
 
 
-  @spec new_session(This.t, Identifier.user_id)
+  @spec new_session(This.t, Identifier.user)
     :: {:ok, Sessions.tokens, This.t}
 
   def new_session(this, user_id) do

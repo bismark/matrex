@@ -1,7 +1,5 @@
 defmodule Matrex.Models.Rooms do
 
-  require Logger
-
   alias __MODULE__, as: This
   alias Matrex.Identifier
   alias Matrex.Models.Room

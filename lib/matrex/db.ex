@@ -18,7 +18,7 @@ defmodule Matrex.DB do
   end
 
 
-  @spec login(Identifier.user | String.t, String.t)
+  @spec login(Identifier.user, String.t)
     :: {:ok, {Sessions.tokens, Identifier.user}} | {:error, atom}
   def login(user_id, password) do
     with {:ok, user_id} <- check_password(user_id, password) do
@@ -50,7 +50,7 @@ defmodule Matrex.DB do
 
 
   @spec register(Identifier.user | nil, String.t)
-    :: {:ok, {Sessions.tokens, Identifier.user_id}} | {:error, atom}
+    :: {:ok, {Sessions.tokens, Identifier.user}} | {:error, atom}
   def register(user_id_or_nil, password) do
     passhash = Account.hash_password(password)
     Agent.get_and_update(This, fn data ->

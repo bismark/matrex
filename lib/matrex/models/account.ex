@@ -38,6 +38,9 @@ defmodule Matrex.Models.Account do
 
 
   @spec dummy_check_password :: :ok
-  def dummy_check_password, do: dummy_checkpw()
+  def dummy_check_password do
+    dummy_checkpw()
+    :ok
+  end
 
 end

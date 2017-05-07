@@ -91,6 +91,8 @@ end
 
 defprotocol This.Content do
 
+  alias __MODULE__
+
   @spec type(Content.t) :: String.t
   def type(content)
 

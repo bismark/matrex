@@ -2,7 +2,7 @@ defmodule Matrex.Models.Sessions do
 
   alias __MODULE__, as: This
   alias Matrex.Models.Session
-  alias Matrex.Models.Account
+  alias Matrex.Identifier
 
 
   @type token :: String.t
@@ -22,7 +22,7 @@ defmodule Matrex.Models.Sessions do
   @token_length 64
 
 
-  @spec new_session(This.t, Account.user_id) :: {:ok, tokens, This.t}
+  @spec new_session(This.t, Identifier.user) :: {:ok, tokens, This.t}
   def new_session(this, user) do
     access_token = create_token()
     refresh_token = create_token()
@@ -49,7 +49,7 @@ defmodule Matrex.Models.Sessions do
 
 
   @spec get_user(This.t, token)
-    :: {:ok, Account.user_id, This.t} | {:error, atom, This.t}
+    :: {:ok, Identifier.user, This.t} | {:error, atom, This.t}
   def get_user(this, access_token) do
     with {:ok, session} <- get_session(this, access_token),
          :ok <- check_session(session)
@@ -117,7 +117,7 @@ defmodule Matrex.Models.Sessions do
 
 
   @spec pop_refresh_user(This.t, token)
-    :: {:ok, String.t, %This{}} | {:error, atom, %This{}}
+    :: {:ok, Identifier.user, %This{}} | {:error, atom, %This{}}
   defp pop_refresh_user(this, refresh_token) do
     case Map.pop(this.refresh_tokens, refresh_token) do
       {nil, _} -> {:error, :unknown_token, this}

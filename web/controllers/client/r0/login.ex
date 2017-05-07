@@ -51,7 +51,7 @@ defmodule Matrex.Controllers.Client.R0.Login do
   defp validate_type(_), do: {:error, :unknown}
 
 
-  @spec parse_user(String.t) :: {:ok, Identifier.user | String.t}
+  @spec parse_user(String.t) :: {:ok, Identifier.user}
   defp parse_user(user) do
     case Identifier.parse(user, :user) do
       :error -> {:ok, Identifier.new(:user, user)}

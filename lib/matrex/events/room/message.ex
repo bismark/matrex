@@ -59,6 +59,8 @@ end
 
 defprotocol This.Type do
 
+  alias __MODULE__
+
   @spec type(Type.t) :: String.t
   def type(type)
 
