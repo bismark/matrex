@@ -64,11 +64,8 @@ defmodule Matrex.DB do
   @spec create_room([RoomEvent.Content.t], Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
   def create_room(contents, access_token) do
-    Agent.get_and_update(This, fn data ->
-      with {:ok, user, data} <- Data.auth(data, access_token) do
-        Data.create_room(data, contents, user)
-      end
-        |> wrap_result
+    auth_perform(access_token, fn (data, user) ->
+      Data.create_room(data, contents, user)
     end)
   end
 
@@ -76,11 +73,8 @@ defmodule Matrex.DB do
   @spec join_room(Identifier.room, Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
   def join_room(room_id, access_token) do
-    Agent.get_and_update(This, fn data ->
-      with {:ok, user, data} <- Data.auth(data, access_token) do
-        Data.join_room(data, room_id, user)
-      end
-        |> wrap_result
+    auth_perform(access_token, fn (data, user) ->
+      Data.join_room(data, room_id, user)
     end)
   end
 
@@ -89,16 +83,31 @@ defmodule Matrex.DB do
     :: {:ok, Identifier.event} | {:error, atom}
   def send_event(room_id, _txn_id, content, access_token) do
     #TODO deal with txn_id
-    Agent.get_and_update(This, fn data ->
-      with {:ok, user, data} <- Data.auth(data, access_token) do
-        Data.send_event(data, room_id, user, content)
-      end
-        |> wrap_result
+    auth_perform(access_token, fn (data, user) ->
+      Data.send_event(data, room_id, user, content)
     end)
   end
 
 
   # Internal Functions
+
+  @typep auth_function :: (Data.t, Identifier.user -> {:ok, any, Data.t} | {:error, atom, Data.t})
+
+  @spec auth_perform(Sessions.token, auth_function)
+    :: {:ok, any} | {:error, atom}
+  defp auth_perform(access_token, func) do
+    Agent.get_and_update(This, fn data ->
+      with {:ok, user, data} <- Data.auth(data, access_token),
+           {:ok, result, data} <- func.(data, user)
+      do
+        {{:ok, result}, data}
+      else
+        {:error, error, data} ->
+          {{:error, error}, data}
+      end
+    end)
+  end
+
 
   @spec check_password(Identifier.user, String.t)
     :: {:ok, Identifier.user} | {:error, atom}
@@ -131,8 +140,6 @@ defmodule Matrex.DB do
   # Internal Functions
 
   defp wrap_result({:error, error, data}), do: {{:error, error}, data}
-
-  defp wrap_result({:ok, data}), do: {:ok, data}
 
   defp wrap_result({:ok, res, data}), do: {{:ok, res}, data}
 
