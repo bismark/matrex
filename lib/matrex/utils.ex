@@ -6,6 +6,8 @@ defmodule Matrex.Utils do
   def age(since), do: timestamp() - since
 
 
+  @spec map_move(map, any, any) :: map
+
   def map_move(map, old_key, new_key) do
     case Map.fetch(map, old_key) do
       :error -> map

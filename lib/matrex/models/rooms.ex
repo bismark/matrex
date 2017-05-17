@@ -5,12 +5,12 @@ defmodule Matrex.Models.Rooms do
   alias Matrex.Models.Room
   alias Matrex.Events.Room, as: RoomEvent
 
-  @type t :: %{}
+  @type t :: %{Identifier.room => Room.t}
 
   def new, do: %{}
 
 
-  @spec create(This.t, [RoomEvent.Content.t], Identifier.user)
+  @spec create(This.t, map, Identifier.user)
     :: {Identifier.room, This.t}
   def create(this, contents, actor) do
     id = generate_room_id(this)
@@ -30,7 +30,7 @@ defmodule Matrex.Models.Rooms do
   end
 
 
-  @spec send_event(This.t, Identifier.room, Identifier.user, RoomEvent.Content.t)
+  @spec send_event(This.t, Identifier.room, Identifier.user, RoomEvent.content)
     :: {:ok, Identifier.event, This.t} | {:error, atom}
   def send_event(this, room_id, user, content) do
     with {:ok, room} <- fetch_room(this, room_id),

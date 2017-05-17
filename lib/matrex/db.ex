@@ -61,7 +61,7 @@ defmodule Matrex.DB do
   end
 
 
-  @spec create_room([RoomEvent.Content.t], Sessions.token)
+  @spec create_room(map, Sessions.token)
     :: {:ok, Identifier.room} | {:error, atom}
   def create_room(contents, access_token) do
     auth_perform(access_token, fn (data, user) ->
@@ -79,7 +79,7 @@ defmodule Matrex.DB do
   end
 
 
-  @spec send_event(Identifier.room, String.t, RoomEvent.Content.t, Sessions.token)
+  @spec send_event(Identifier.room, String.t | nil, RoomEvent.content, Sessions.token)
     :: {:ok, Identifier.event} | {:error, atom}
   def send_event(room_id, _txn_id, content, access_token) do
     #TODO deal with txn_id
@@ -142,6 +142,5 @@ defmodule Matrex.DB do
   defp wrap_result({:error, error, data}), do: {{:error, error}, data}
 
   defp wrap_result({:ok, res, data}), do: {{:ok, res}, data}
-
 
 end

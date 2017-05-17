@@ -14,6 +14,11 @@ defmodule Matrex.Validation do
   - post: function to post process
   """
 
+  @typep key :: String.t | atom
+
+  @spec required(key, map, map, Keyword.t)
+    :: {:ok, map} | {:error, term}
+
   def required(key, args, acc, options \\ []) do
     case fetch(key, args) do
       :error -> {:error, {:missing_arg, key}}
@@ -22,6 +27,9 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec optional(key, map, map, Keyword.t)
+    :: {:ok, map} | {:error, term}
+
   def optional(key, args, acc, options \\ []) do
     case fetch(key, args) do
       :error -> default(key, acc, options)
@@ -29,6 +37,9 @@ defmodule Matrex.Validation do
     end
   end
 
+
+  @spec validate_value(key, any, map, Keyword.t)
+    :: {:ok, map} | {:error, term}
 
   defp validate_value(key, value, acc, options) do
     with :ok <- validate_type(value, options),
@@ -44,6 +55,9 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec validate_type(any, Keyword.t)
+    :: :ok | {:error, atom}
+
   defp validate_type(value, options) do
     case Keyword.fetch(options, :type) do
       :error -> :ok
@@ -52,6 +66,7 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec _validate_type(atom, any) :: :ok | {:error, atom}
   defp _validate_type(:string, value) when is_binary(value), do: :ok
   defp _validate_type(:integer, value) when is_integer(value), do: :ok
   defp _validate_type(:boolean, value) when is_boolean(value), do: :ok
@@ -60,6 +75,8 @@ defmodule Matrex.Validation do
   defp _validate_type(_, _), do: {:error, :bad_type}
 
 
+  @spec cast(any, Keyword.t) ::  {:ok, any} | {:error, atom}
+
   defp cast(value, options) do
     case Keyword.fetch(options, :as) do
       :error -> {:ok, value}
@@ -67,6 +84,8 @@ defmodule Matrex.Validation do
     end
   end
 
+
+  @spec _cast(any, atom) :: {:ok, any} | {:error, atom}
 
   defp _cast(value, :atom) when is_binary(value) do
     try do
@@ -79,6 +98,8 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec validate_allowed(any, Keyword.t) :: :ok | {:error, atom}
+
   defp validate_allowed(value, options) do
     case Keyword.fetch(options, :allowed) do
       :error -> :ok
@@ -89,6 +110,9 @@ defmodule Matrex.Validation do
     end
   end
 
+
+  @spec postprocess(any, Keyword.t) :: {:ok, any} | {:error, term}
+
   defp postprocess(value, options) do
     case Keyword.fetch(options, :post) do
       :error -> {:ok, value}
@@ -97,10 +121,14 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec get_key(key, Keyword.t) :: key
+
   defp get_key(key, options) do
     Keyword.get(options, :key, key)
   end
 
+
+  @spec default(key, map, Keyword.t) :: {:ok, map}
 
   defp default(key, acc, options) do
     case Keyword.fetch(options, :default) do
@@ -112,6 +140,7 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec default_lazy(key, map, Keyword.t) :: {:ok, map}
   defp default_lazy(key, acc, options) do
     case Keyword.fetch(options, :default_lazy) do
       :error -> {:ok, acc}
@@ -123,6 +152,7 @@ defmodule Matrex.Validation do
   end
 
 
+  @spec fetch(key, map) :: any
   defp fetch(key, args) do
     with :error <- Map.fetch(args, key) do
       if is_atom(key) do

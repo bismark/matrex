@@ -20,6 +20,8 @@ defmodule Matrex.Controllers.Client.R0.Rooms.Join do
   end
 
 
+  @spec parse_args(map) :: {:ok, map} | {:error, term}
+
   defp parse_args(args) do
     acc = %{}
     with {:ok, acc} <- required(:room_id, args, acc, type: :string, post: &parse_room_id/1),
@@ -27,6 +29,8 @@ defmodule Matrex.Controllers.Client.R0.Rooms.Join do
   end
 
 
+  @spec parse_room_id(String.t)
+    :: {:ok, Identifier.room} | {:error, :forbidden}
   defp parse_room_id(room_id) do
     case Identifier.parse(room_id, :room) do
       :error -> {:error, :forbidden}

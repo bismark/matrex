@@ -3,7 +3,6 @@ defmodule Matrex.DB.Data do
   alias __MODULE__, as: This
   alias Matrex.Models.{Account, Sessions, Rooms}
   alias Matrex.Identifier
-  alias Matrex.Events.Room, as: RoomEvent
 
   @type t :: %This{
     accounts: %{Identifier.user => Account.t},
@@ -22,7 +21,7 @@ defmodule Matrex.DB.Data do
 
   ### Rooms ###
 
-  @spec create_room(This.t, [RoomEvent.Content.t], Identifier.user)
+  @spec create_room(This.t, map, Identifier.user)
     :: {:ok, Identifier.room, This.t} | {:error, atom, This.t}
 
   def create_room(this, contents, user) do
