@@ -1,17 +1,16 @@
 defmodule Matrex.Events.Room.StateContent do
-
   import Matrex.Validation
 
   alias __MODULE__, as: This
 
-  @type key :: {String.t, String.t}
+  @type key :: {String.t(), String.t()}
 
   @type t :: %This{
-    content: map,
-    prev_content: nil | map,
-    state_key: any,
-    type: String.t,
-  }
+          content: map,
+          prev_content: nil | map,
+          state_key: any,
+          type: String.t()
+        }
 
   defstruct [
     :content,
@@ -20,33 +19,29 @@ defmodule Matrex.Events.Room.StateContent do
     :type
   ]
 
-
-  @spec new(String.t, map, any) :: {:ok, This.t} | {:error, term}
+  @spec new(String.t(), map, any) :: {:ok, This.t()} | {:error, term}
 
   def new(type, content, state_key \\ "") do
     with {:ok, parsed} <- parse_content(type, content),
-         content =  Map.merge(content, parsed),
-    do: {:ok, %This{type: type, content: content, state_key: state_key}}
+         content = Map.merge(content, parsed),
+         do: {:ok, %This{type: type, content: content, state_key: state_key}}
   end
 
-
-  @spec key(This.t) :: key
+  @spec key(This.t()) :: key
   def key(this), do: {this.type, this.state_key}
 
-
-  @spec set_content(This.t, String.t, any) :: This.t
+  @spec set_content(This.t(), String.t(), any) :: This.t()
 
   def set_content(this, key, value) do
     content = Map.put(this.content, key, value)
     %This{this | content: content}
   end
 
-
   @allowed_history_visibility [
     "invited",
     "joined",
     "shared",
-    "world_readable",
+    "world_readable"
   ]
 
   @allowed_join_rules [
@@ -58,10 +53,10 @@ defmodule Matrex.Events.Room.StateContent do
     "invite",
     "join",
     "leave",
-    "ban",
+    "ban"
   ]
 
-  @spec parse_content(String.t, map) :: {:ok, map} | {:error, term}
+  @spec parse_content(String.t(), map) :: {:ok, map} | {:error, term}
 
   defp parse_content("m.room.create", content) do
     options = [type: :boolean, default: true]
@@ -94,6 +89,4 @@ defmodule Matrex.Events.Room.StateContent do
   end
 
   defp parse_content(_, content), do: {:ok, content}
-
 end
-

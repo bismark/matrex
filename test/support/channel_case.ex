@@ -20,14 +20,12 @@ defmodule Matrex.ChannelCase do
       # Import conveniences for testing with channels
       use Phoenix.ChannelTest
 
-
       # The default endpoint for testing
       @endpoint Matrex.Endpoint
     end
   end
 
   setup _tags do
-
     :ok
   end
 end

@@ -1,10 +1,8 @@
 defmodule Matrex.Models.SessionsTest do
-
   use ExUnit.Case, async: true
 
   alias Matrex.Models.Sessions
   alias Matrex.Models.Session
-
 
   test "new session" do
     username = "foo"
@@ -15,7 +13,6 @@ defmodule Matrex.Models.SessionsTest do
     assert %Session{user: ^username} = Map.fetch!(sessions.access_tokens, access_token)
     assert username == Map.fetch!(sessions.refresh_tokens, refresh_token)
   end
-
 
   test "get user" do
     username = "foo"
@@ -32,7 +29,6 @@ defmodule Matrex.Models.SessionsTest do
     assert {:error, :unknown_token, sessions_2} = Sessions.get_user(sessions, access_token)
     assert not Map.has_key?(sessions_2.access_tokens, access_token)
   end
-
 
   test "refresh_session" do
     username = "foo"
@@ -55,14 +51,13 @@ defmodule Matrex.Models.SessionsTest do
     assert {:ok, _, _} = Sessions.refresh_session(sessions, refresh_token_2)
   end
 
-
   defp expire_session(sessions, access_token) do
-    session = sessions.access_tokens
+    session =
+      sessions.access_tokens
       |> Map.fetch!(access_token)
       |> struct(expires: :erlang.monotonic_time(:second) - 1)
 
     access_tokens = Map.put(sessions.access_tokens, access_token, session)
     %Sessions{sessions | access_tokens: access_tokens}
   end
-
 end
