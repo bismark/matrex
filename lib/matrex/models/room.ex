@@ -2,10 +2,10 @@ defmodule Matrex.Models.Room do
   alias __MODULE__, as: This
   alias Matrex.Identifier
   alias Matrex.Events.Event
-  alias Matrex.Events.Room, as: RoomEvent
-  alias Matrex.Events.Room.StateContent
+  alias Matrex.Events.State
+  alias Matrex.Events.Message
 
-  @typep state :: %{StateContent.key() => Event.t()}
+  @typep state :: %{State.key() => Event.t()}
 
   @type t :: %This{
           id: Identifier.room(),
@@ -25,19 +25,18 @@ defmodule Matrex.Models.Room do
   def new(id, contents, actor) do
     create_key = {"m.room.create", ""}
     {create_content, rest} = Map.pop(contents, create_key)
-    create_content = StateContent.set_content(create_content, "creator", actor)
-    create_event = RoomEvent.create(id, actor, create_content)
+    create_content = Map.put(create_content, "creator", actor)
+    create_event = State.create(id, actor, create_content, "m.room.create")
 
     # TODO is this correct behaviour?
     join_content = %{"membership" => "join"}
-    {:ok, join_content} = StateContent.new("m.room.member", join_content, actor)
-    join_event = RoomEvent.create(id, actor, join_content)
+    join_event = State.create(id, actor, join_content, "m.room.member", actor)
 
     rest_events =
       rest
-      |> Enum.map(fn {key, content} ->
-        event = RoomEvent.create(id, actor, content)
-        {key, event}
+      |> Enum.map(fn {{type, state_key}, content} ->
+        event = State.create(id, actor, content, type, state_key)
+        {{type, state_key}, event}
       end)
       |> Enum.into(%{})
 
@@ -46,7 +45,7 @@ defmodule Matrex.Models.Room do
     state =
       rest_events
       |> Map.put(create_key, create_event)
-      |> Map.put(StateContent.key(join_content), join_event)
+      |> Map.put(State.key(join_event), join_event)
 
     %This{id: id, events: events, state: state}
   end
@@ -59,40 +58,50 @@ defmodule Matrex.Models.Room do
 
       "public" ->
         content = %{"membership" => "join"}
-        {:ok, content} = StateContent.new("m.room.member", content, user)
-        this = update_state(this, user, content)
+        event = State.create(this.id, user, content, "m.room.member", user)
+        this = update_state(this, event)
         {:ok, this}
     end
   end
 
-  @spec send_event(This.t(), Identifier.user(), RoomEvent.content()) ::
+  @spec send_state(This.t(), Identifier.user(), String.t(), String.t(), map) ::
           {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_event(this, user, content) do
+  def send_state(this, user, event_type, state_key, content) do
     case membership(this.state, user) do
       "join" ->
-        event = RoomEvent.create(this.id, user, content)
-        events = [event | this.events]
-        state = Map.put(this.state, StateContent.key(content), content)
-        {:ok, event.event_id, %This{this | events: events, state: state}}
+        event = State.create(this.id, user, content, event_type, state_key)
+        {:ok, event.event_id, update_state(this, event)}
 
       _ ->
         {:error, :forbidden}
     end
   end
 
-  @spec update_state(This.t(), Identifier.user(), StateContent.t() | nil) :: This.t()
-  defp update_state(this, actor, content) do
-    key = StateContent.key(content)
+  @spec send_event(This.t(), Identifier.user(), String.t(), map) ::
+          {:ok, Identifier.event(), This.t()} | {:error, atom}
+  def send_event(this, user, event_type, content) do
+    case membership(this.state, user) do
+      "join" ->
+        event = Message.create(this.id, user, content, event_type)
+        events = [event | this.events]
+        {:ok, event.event_id, %This{this | events: [event | events]}}
+
+      _ ->
+        {:error, :forbidden}
+    end
+  end
+
+  @spec update_state(This.t(), State.t()) :: This.t()
+  defp update_state(this, event) do
+    key = State.key(event)
 
     event =
       case Map.fetch(this.state, key) do
         :error ->
-          RoomEvent.create(this.id, actor, content)
+          event
 
         {:ok, prev_event} ->
-          prev_content = prev_event.content.content
-          content = %StateContent{content | prev_content: prev_content}
-          RoomEvent.create(this.id, actor, content)
+          %State{event | prev_content: prev_event.content}
       end
 
     events = [event | this.events]
@@ -103,9 +112,10 @@ defmodule Matrex.Models.Room do
   @spec join_rule(state) :: String.t()
   defp join_rule(state) do
     event = Map.fetch!(state, {"m.room.join_rules", ""})
-    event.content.content["join_rule"]
+    event.content["join_rule"]
   end
 
+  @spec membership(state, Identifier.user()) :: String.t() | nil
   defp membership(state, user) do
     key = {"m.room.member", user}
 

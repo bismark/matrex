@@ -4,7 +4,6 @@ defmodule Matrex.DB do
   alias Matrex.DB.Data
   alias Matrex.Models.{Account, Sessions}
   alias Matrex.Identifier
-  alias Matrex.Events.Room, as: RoomEvent
 
   @doc "For debugging purposes"
   @spec dump :: Data.t()
@@ -70,12 +69,20 @@ defmodule Matrex.DB do
     end)
   end
 
-  @spec send_event(Identifier.room(), String.t() | nil, RoomEvent.content(), Sessions.token()) ::
+  @spec send_state(Identifier.room(), String.t(), String.t(), map, Sessions.token()) ::
           {:ok, Identifier.event()} | {:error, atom}
-  def send_event(room_id, _txn_id, content, access_token) do
+  def send_state(room_id, event_type, state_key, content, access_token) do
+    auth_perform(access_token, fn data, user ->
+      Data.send_state(data, room_id, user, event_type, state_key, content)
+    end)
+  end
+
+  @spec send_event(Identifier.room(), String.t() | nil, String.t(), map, Sessions.token()) ::
+          {:ok, Identifier.event()} | {:error, atom}
+  def send_event(room_id, _txn_id, event_type, content, access_token) do
     # TODO deal with txn_id
     auth_perform(access_token, fn data, user ->
-      Data.send_event(data, room_id, user, content)
+      Data.send_event(data, room_id, user, event_type, content)
     end)
   end
 

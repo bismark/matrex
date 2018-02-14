@@ -38,11 +38,24 @@ defmodule Matrex.DB.Data do
     end
   end
 
-  @spec send_event(This.t(), Identifier.room(), Identifier.user(), struct) ::
+  @spec send_state(This.t(), Identifier.room(), Identifier.user(), String.t(), String.t(), map) ::
           {:ok, Identifier.event(), This.t()} | {:error, atom, This.t()}
 
-  def send_event(this, room_id, user, content) do
-    case Rooms.send_event(this.rooms, room_id, user, content) do
+  def send_state(this, room_id, user, event_type, state_key, content) do
+    case Rooms.send_state(this.rooms, room_id, user, event_type, state_key, content) do
+      {:error, error} ->
+        {:error, error, this}
+
+      {:ok, event_id, rooms} ->
+        {:ok, event_id, %This{this | rooms: rooms}}
+    end
+  end
+
+  @spec send_event(This.t(), Identifier.room(), Identifier.user(), String.t(), map) ::
+          {:ok, Identifier.event(), This.t()} | {:error, atom, This.t()}
+
+  def send_event(this, room_id, user, event_type, content) do
+    case Rooms.send_event(this.rooms, room_id, user, event_type, content) do
       {:error, error} ->
         {:error, error, this}
 

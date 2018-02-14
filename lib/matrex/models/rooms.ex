@@ -2,7 +2,6 @@ defmodule Matrex.Models.Rooms do
   alias __MODULE__, as: This
   alias Matrex.Identifier
   alias Matrex.Models.Room
-  alias Matrex.Events.Room, as: RoomEvent
 
   @type t :: %{Identifier.room() => Room.t()}
 
@@ -24,11 +23,20 @@ defmodule Matrex.Models.Rooms do
     end
   end
 
-  @spec send_event(This.t(), Identifier.room(), Identifier.user(), RoomEvent.content()) ::
+  @spec send_state(This.t(), Identifier.room(), Identifier.user(), String.t(), String.t(), map) ::
           {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_event(this, room_id, user, content) do
+  def send_state(this, room_id, user, event_type, state_key, content) do
     with {:ok, room} <- fetch_room(this, room_id),
-         {:ok, event_id, room} <- Room.send_event(room, user, content) do
+         {:ok, event_id, room} <- Room.send_state(room, user, event_type, state_key, content) do
+      {:ok, event_id, Map.put(this, room_id, room)}
+    end
+  end
+
+  @spec send_event(This.t(), Identifier.room(), Identifier.user(), String.t(), map) ::
+          {:ok, Identifier.event(), This.t()} | {:error, atom}
+  def send_event(this, room_id, user, event_type, content) do
+    with {:ok, room} <- fetch_room(this, room_id),
+         {:ok, event_id, room} <- Room.send_event(room, user, event_type, content) do
       {:ok, event_id, Map.put(this, room_id, room)}
     end
   end

@@ -5,7 +5,7 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
   import Matrex.Validation
 
   alias Matrex.DB
-  alias Matrex.Events.Room.StateContent
+  alias Matrex.Validation.StateContent, as: StateContentValidation
 
 
   def post(conn, _params) do
@@ -71,31 +71,28 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
 
 
   defp gen_create_content(acc, %{creation_content: create_content}) do
-    case StateContent.new("m.room.create", create_content) do
+    case StateContentValidation.parse_content("m.room.create", create_content) do
       {:ok, content} ->
-        Map.put(acc, StateContent.key(content), content)
+        Map.put(acc, {"m.room.create", ""}, content)
       _ ->
         gen_create_content(acc, %{})
     end
   end
 
   defp gen_create_content(acc, _) do
-    {:ok, content} = StateContent.new("m.room.create", %{})
-    Map.put(acc, StateContent.key(content), content)
+    Map.put(acc, {"m.room.create", ""}, %{})
   end
 
 
   defp gen_name_content(acc, %{name: name}) do
-    {:ok, content} = StateContent.new("m.room.name", %{"name" => name})
-    Map.put(acc, StateContent.key(content), content)
+    Map.put(acc, {"m.room.name", ""}, %{"name" => name})
   end
 
   defp gen_name_content(acc, _), do: acc
 
 
   defp gen_topic_content(acc, %{topic: topic}) do
-    {:ok, content} = StateContent.new("m.room.topic", %{"topic" => topic})
-    Map.put(acc, StateContent.key(content), content)
+    Map.put(acc, {"m.room.topic", ""}, %{"topic" => topic})
   end
 
   defp gen_topic_content(acc, _), do: acc
@@ -103,16 +100,15 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
 
   defp gen_initial_state_content(acc, %{initial_state: initial_state}) do
     Enum.reduce(initial_state, acc, fn (state, acc) ->
-      case StateContent.new(state.type, state.content, state.state_key) do
+      case StateContentValidation.parse_content(state.type, state.content, state.state_key) do
         {:ok, content} ->
-          Map.put(acc, StateContent.key(content), content)
+          Map.put(acc, {state.type, state.state_key}, content)
         _ -> acc
       end
     end)
   end
 
   defp gen_initial_state_content(acc, _), do: acc
-
 
   defp gen_preset_content(acc, %{preset: preset}) do
     {join_rule, visibility} = case preset do
@@ -121,13 +117,9 @@ defmodule Matrex.Controllers.Client.R0.CreateRoom do
       "public_chat" -> {"public", "shared"}
     end
 
-    args = %{"join_rule" => join_rule}
-    {:ok, content} = StateContent.new("m.room.join_rules", args)
-    acc = Map.put(acc, StateContent.key(content), content)
-
-    args = %{"history_visibility" => visibility}
-    {:ok, content} = StateContent.new("m.room.history_visibility", args)
-    Map.put(acc, StateContent.key(content), content)
+    acc
+    |> Map.put({"m.room.join_rules", ""}, %{"join_rule" => join_rule})
+    |> Map.put({"m.room.history_visibility", ""}, %{"history_visibility" => visibility})
   end
 
   defp gen_preset_content(acc, _), do: acc
