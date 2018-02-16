@@ -1,22 +1,20 @@
 defmodule Matrex.Errors do
-
   import Phoenix.Controller, only: [json: 2]
   alias Plug.Conn
 
   @typep error :: atom | {atom, any}
 
-  @spec json_error(Conn.t, error) :: Conn.t
+  @spec json_error(Conn.t(), error) :: Conn.t()
   def json_error(conn, error) do
     conn
-      |> Conn.put_status(status_code(error))
-      |> json(%{
-        errcode: error(error),
-        error: message(error),
-      })
+    |> Conn.put_status(status_code(error))
+    |> json(%{
+      errcode: error(error),
+      error: message(error)
+    })
   end
 
-
-  @spec error(error) :: String.t
+  @spec error(error) :: String.t()
   defp error(:user_in_user), do: "M_USER_IN_USE"
   defp error(:invalid_username), do: "M_INVALID_USERNAME"
   defp error({:missing_arg, _}), do: "M_BAD_JSON"
@@ -31,8 +29,8 @@ defmodule Matrex.Errors do
   @spec status_code(error) :: integer
   defp status_code(:user_in_use), do: 400
   defp status_code(:invalid_username), do: 400
-  defp status_code({:missing_arg,_}), do: 400
-  defp status_code({:bad_type,_}), do: 400
+  defp status_code({:missing_arg, _}), do: 400
+  defp status_code({:bad_type, _}), do: 400
   defp status_code(:unknown), do: 400
   defp status_code(:forbidden), do: 403
   defp status_code(:missing_token), do: 401
@@ -40,7 +38,7 @@ defmodule Matrex.Errors do
   defp status_code(:not_found), do: 404
   defp status_code(_), do: 500
 
-  @spec message(error) :: String.t
+  @spec message(error) :: String.t()
   defp message(:user_in_user), do: "User ID already taken"
   defp message(:invalid_username), do: "User ID is invalid"
   defp message({:missing_arg, key}), do: "Missing required key #{key}"
@@ -51,7 +49,4 @@ defmodule Matrex.Errors do
   defp message(:unknown_token), do: "Unknown access token"
   defp message(:not_found), do: "Not found"
   defp message(_), do: "Unknown Error"
-
-
-
 end
