@@ -8,8 +8,8 @@ defmodule Matrex.Controllers.Client.R0.Login do
 
   @login_type "m.login.password"
 
-  def get(conn, _params) do
-    json(conn, %{flows: [%{type: @login_type}]})
+  def get(_conn, _params) do
+    {:ok, %{flows: [%{type: @login_type}]}}
   end
 
   def post(conn, _params) do
@@ -24,10 +24,7 @@ defmodule Matrex.Controllers.Client.R0.Login do
         home_server: user_id.hostname
       }
 
-      json(conn, resp)
-    else
-      {:error, error} ->
-        json_error(conn, error)
+      {:ok, resp}
     end
   end
 

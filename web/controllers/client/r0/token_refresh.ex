@@ -15,10 +15,7 @@ defmodule Matrex.Controllers.Client.R0.TokenRefresh do
         refresh_token: refresh_token
       }
 
-      json(conn, resp)
-    else
-      {:error, error} ->
-        json_error(conn, error)
+      {:ok, resp}
     end
   end
 

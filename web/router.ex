@@ -3,7 +3,6 @@ defmodule Matrex.Router do
 
   alias Matrex.Controllers.Client
   alias Matrex.Plugs.RequireAccessToken
-  alias Matrex.Plugs.RequireAccessToken
 
   pipeline :api do
     plug(:accepts, ["json"])

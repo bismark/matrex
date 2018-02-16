@@ -1,27 +1,22 @@
 defmodule Matrex.Controllers.Client.R0.CreateRoom do
-  use Matrex.Web, :controller
+  use Matrex.Web, :authed_controller
 
   import Matrex.Validation
 
   alias Matrex.DB
   alias Matrex.Validation.StateContent, as: StateContentValidation
 
-  def post(conn, _params) do
-    access_token = conn.assigns[:access_token]
-
+  def post(conn, _params, access_token) do
     with {:ok, args} <- parse_args(conn.body_params),
-         {:ok, room_id} <- DB.create_room(args.contents, access_token) do
-      json(conn, %{room_id: room_id})
-    else
-      {:error, error} ->
-        json_error(conn, error)
-    end
+         {:ok, room_id} <- DB.create_room(args.contents, access_token),
+         do: {:ok, %{room_id: room_id}}
   end
 
   @allowed_presets ["private_chat", "public_chat", "trusted_private_chat"]
 
   defp parse_args(body) do
     acc = %{}
+
     with {:ok, acc} <- optional(:creation_content, body, acc, type: :map),
          {:ok, acc} <- optional(:name, body, acc, type: :string),
          {:ok, acc} <- optional(:topic, body, acc, type: :string),

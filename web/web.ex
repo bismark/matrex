@@ -16,12 +16,28 @@ defmodule Matrex.Web do
   below.
   """
 
+  def authed_controller do
+    quote do
+      use Phoenix.Controller
+      use Matrex.AuthedController
+
+      import Matrex.Router.Helpers
+      import Matrex.Errors
+      import Matrex.Web.Helpers
+
+      action_fallback(Matrex.FallbackController)
+    end
+  end
+
   def controller do
     quote do
       use Phoenix.Controller
 
       import Matrex.Router.Helpers
       import Matrex.Errors
+      import Matrex.Web.Helpers
+
+      action_fallback(Matrex.FallbackController)
     end
   end
 

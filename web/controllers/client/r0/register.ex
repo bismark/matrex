@@ -19,10 +19,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
         home_server: user_id.hostname
       }
 
-      json(conn, resp)
-    else
-      {:error, error} ->
-        json_error(conn, error)
+      {:ok, resp}
     end
   end
 
