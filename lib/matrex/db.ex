@@ -4,6 +4,10 @@ defmodule Matrex.DB do
   alias Matrex.DB.Data
   alias Matrex.Models.{Account, Sessions}
   alias Matrex.Identifier
+  alias Matrex.Events.State
+
+  @typep auth_function ::
+           (Data.t(), Identifier.user() -> {:ok, any, Data.t()} | {:error, atom, Data.t()})
 
   @doc "For debugging purposes"
   @spec dump :: Data.t()
@@ -86,10 +90,23 @@ defmodule Matrex.DB do
     end)
   end
 
-  # Internal Functions
+  @spec fetch_state(Identifier.room(), String.t(), String.t(), Sessions.token()) ::
+          {:ok, State.t()} | {:error, atom}
+  def fetch_state(room_id, event_type, state_key, access_token) do
+    auth_perform(access_token, fn this, user ->
+      Data.fetch_state(this, room_id, event_type, state_key, user)
+    end)
+  end
 
-  @typep auth_function ::
-           (Data.t(), Identifier.user() -> {:ok, any, Data.t()} | {:error, atom, Data.t()})
+  @spec fetch_all_state(Identifier.room(), Sessions.token()) ::
+          {:ok, [State.t()]} | {:error, atom}
+  def fetch_all_state(room_id, access_token) do
+    auth_perform(access_token, fn this, user ->
+      Data.fetch_all_state(this, room_id, user)
+    end)
+  end
+
+  # Internal Functions
 
   @spec auth_perform(Sessions.token(), auth_function) :: {:ok, any} | {:error, atom}
   defp auth_perform(access_token, func) do

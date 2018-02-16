@@ -91,6 +91,40 @@ defmodule Matrex.Models.Room do
     end
   end
 
+  @spec fetch_state(This.t(), String.t(), String.t(), Identifier.user()) ::
+          {:ok, State.t(), This.t()} | {:error, atom}
+  def fetch_state(this, event_type, state_key, user) do
+    case membership(this.state, user) do
+      "join" ->
+        get_state(this, this.state, {event_type, state_key})
+
+      "leave" ->
+        state = get_state_when_left(this, user)
+        get_state(this, state, {event_type, state_key})
+
+      _ ->
+        {:error, :forbidden}
+    end
+  end
+
+  @spec fetch_all_state(This.t(), Identifier.user()) ::
+          {:ok, [State.t()], This.t()} | {:error, atom}
+  def fetch_all_state(this, user) do
+    case membership(this.state, user) do
+      "join" ->
+        {:ok, Map.values(this.state), this}
+
+      "leave" ->
+        state = get_state_when_left(this, user)
+        {:ok, Map.values(state), this}
+
+      _ ->
+        {:error, :forbidden}
+    end
+  end
+
+  # Private Functions
+
   @spec update_state(This.t(), State.t()) :: This.t()
   defp update_state(this, event) do
     key = State.key(event)
@@ -101,7 +135,7 @@ defmodule Matrex.Models.Room do
           event
 
         {:ok, prev_event} ->
-          %State{event | prev_content: prev_event.content}
+          %State{event | prev_state: prev_event}
       end
 
     events = [event | this.events]
@@ -123,5 +157,28 @@ defmodule Matrex.Models.Room do
       :error -> nil
       {:ok, event} -> event.content["membership"]
     end
+  end
+
+  defp get_state(this, state, key) do
+    case Map.fetch(state, key) do
+      {:ok, content} -> {:ok, content, this}
+      :error -> {:error, :not_found}
+    end
+  end
+
+  defp get_state_when_left(this, user) do
+    Enum.reduce_while(this.events, this.state, fn
+      %State{type: "m.room.member", state_key: ^user}, state ->
+        {:halt, state}
+
+      state_event = %State{prev_state: nil}, state ->
+        {:cont, Map.delete(state, State.key(state_event))}
+
+      state_event = %State{}, state ->
+        {:cont, Map.put(state, State.key(state_event), state_event.prev_state)}
+
+      _, state ->
+        {:cont, state}
+    end)
   end
 end

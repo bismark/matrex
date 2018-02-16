@@ -4,14 +4,38 @@ defmodule Matrex.Controllers.Client.R0.Rooms.State do
 
   import Matrex.Validation
 
-  alias Matrex.Utils
   alias Matrex.Identifier
   alias Matrex.DB
   alias Matrex.Validation.StateContent, as: StateContentValidation
+  alias Matrex.Events.Event
+
+  def get_all(conn, params) do
+    access_token = conn.assings[:access_token]
+    with {:ok, args} <- parse_get_all_args(params),
+         {:ok, state} <- DB.fetch_all_state(args.room_id, access_token)
+    do
+      json(conn, Enum.map(state, &Event.output/1))
+    else
+      {:error, error} ->
+        json_error(conn, error)
+    end
+  end
+
+  def get(conn, params) do
+    access_token = conn.assings[:access_token]
+    with {:ok, args} <- parse_get_args(params),
+         {:ok, state} <- DB.fetch_state(args.room_id, args.event_type, args.state_key, access_token)
+    do
+      json(conn, Event.output(state))
+    else
+      {:error, error} ->
+        json_error(conn, error)
+    end
+  end
 
   def put(conn, params) do
     access_token = conn.assigns[:access_token]
-    with {:ok, args} <- parse_args(params, conn.body_params),
+    with {:ok, args} <- parse_put_args(params, conn.body_params),
          {:ok, event_id} <- DB.send_state(args.room_id, args.state_event_type, args.state_key, args.content, access_token)
     do
       json(conn, %{event_id: event_id})
@@ -21,9 +45,23 @@ defmodule Matrex.Controllers.Client.R0.Rooms.State do
     end
   end
 
-  @spec parse_args(map, map) :: {:ok, map} | {:error, term}
+  defp parse_get_all_args(params) do
+    acc = %{}
+    with {:ok, acc} <- required(:room_id, params, acc, type: :string, post: &parse_room_id/1),
+    do: {:ok, acc}
+  end
 
-  defp parse_args(url_params, body) do
+  defp parse_get_args(params) do
+    acc = %{}
+    with {:ok, acc} <- required(:room_id, params, acc, type: :string, post: &parse_room_id/1),
+         {:ok, acc} <- required(:event_type, params, acc, type: :string),
+         {:ok, acc} <- optional(:state_key, params, acc, type: :string, default: ""),
+    do: {:ok, acc}
+  end
+
+  @spec parse_put_args(map, map) :: {:ok, map} | {:error, term}
+
+  defp parse_put_args(url_params, body) do
     acc = %{}
     with {:ok, acc} <- required(:room_id, url_params, acc, type: :string, post: &parse_room_id/1),
          {:ok, acc} <- required(:state_event_type, url_params, acc, type: :string),
@@ -43,4 +81,3 @@ defmodule Matrex.Controllers.Client.R0.Rooms.State do
   end
 
 end
-

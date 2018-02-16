@@ -4,7 +4,6 @@ defmodule Matrex.Controllers.Client.R0.Rooms.Send do
 
   import Matrex.Validation
 
-  alias Matrex.Utils
   alias Matrex.Identifier
   alias Matrex.DB
   alias Matrex.Validation.MessageContent, as: MessageContentValidation

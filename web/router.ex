@@ -34,10 +34,13 @@ defmodule Matrex.Router do
 
       scope "/rooms/:room_id", Rooms do
         post "/join", Join, :post
-        put "/state/:state_event_type", State, :put
-        put "/state/:state_event_type/:state_key", State, :put
         put "/send/:event_type/:txn_id", Send, :put
 
+        get "/state", State, :get_all
+        get "/state/:event_type", State, :get
+        get "/state/:event_type/:state_key", State, :get
+        put "/state/:state_event_type", State, :put
+        put "/state/:state_event_type/:state_key", State, :put
       end
     end
   end

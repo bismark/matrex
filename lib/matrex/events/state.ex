@@ -11,7 +11,7 @@ defmodule Matrex.Events.State do
           sender: Identifier.user(),
           origin_server_ts: integer,
           content: map,
-          prev_content: nil | map,
+          prev_state: nil | This.t(),
           state_key: any,
           type: String.t()
         }
@@ -24,7 +24,7 @@ defmodule Matrex.Events.State do
     :sender,
     :origin_server_ts,
     :content,
-    :prev_content,
+    :prev_state,
     :state_key,
     :type
   ])
@@ -55,6 +55,8 @@ defmodule Matrex.Events.State do
       this
       |> Map.from_struct()
       |> Map.put(:age, Utils.age(this.origin_server_ts))
+      |> Utils.map_move(:prev_state, :prev_content)
+      |> Map.update!(:prev_content, & &1.content)
     end
   end
 end

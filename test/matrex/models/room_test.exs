@@ -2,6 +2,7 @@ defmodule Matrex.Models.RoomTest do
   use ExUnit.Case, async: true
   alias Matrex.Identifier
   alias Matrex.Models.Room
+  alias Matrex.Events.State
 
   test "new room" do
     room_id = Identifier.generate(:room)
@@ -56,9 +57,43 @@ defmodule Matrex.Models.RoomTest do
     assert "join" == state_member_event.content["membership"]
   end
 
-  defp create_room(join_rule \\ "invite") do
+  test "fetch state" do
+    creator = Identifier.generate(:user)
+    room = create_room("public", creator)
+    user = Identifier.generate(:user)
+    assert {:ok, room} = Room.join(room, user)
+
+    {:ok, content, room} = Room.fetch_state(room, "m.room.join_rules", "", user)
+
+    assert %State{
+             type: "m.room.join_rules",
+             content: %{"join_rule" => "public"}
+           } = content
+
+    content = %{"membership" => "leave"}
+    assert {:ok, _, room} = Room.send_state(room, user, "m.room.member", user, content)
+
+    {:ok, content, room} = Room.fetch_state(room, "m.room.join_rules", "", user)
+
+    assert %State{
+             type: "m.room.join_rules",
+             content: %{"join_rule" => "public"}
+           } = content
+
+    content = %{"join_rule" => "invite"}
+    assert {:ok, _, room} = Room.send_state(room, creator, "m.room.join_rules", "", content)
+
+    {:ok, content, _room} = Room.fetch_state(room, "m.room.join_rules", "", user)
+
+    assert %State{
+             type: "m.room.join_rules",
+             content: %{"join_rule" => "public"}
+           } = content
+  end
+
+  defp create_room(join_rule \\ "invite", actor \\ nil) do
     room_id = Identifier.generate(:room)
-    actor_id = Identifier.generate(:user)
+    actor_id = actor || Identifier.generate(:user)
 
     content = %{
       {"m.room.create", ""} => %{},

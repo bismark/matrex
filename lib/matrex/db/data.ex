@@ -2,6 +2,7 @@ defmodule Matrex.DB.Data do
   alias __MODULE__, as: This
   alias Matrex.Models.{Account, Sessions, Rooms}
   alias Matrex.Identifier
+  alias Matrex.Events.State
 
   @type t :: %This{
           accounts: %{Identifier.user() => Account.t()},
@@ -61,6 +62,35 @@ defmodule Matrex.DB.Data do
 
       {:ok, event_id, rooms} ->
         {:ok, event_id, %This{this | rooms: rooms}}
+    end
+  end
+
+  @spec fetch_state(
+          This.t(),
+          Identifier.room(),
+          String.t(),
+          String.t(),
+          Identifier.user()
+        ) :: {:ok, State.t(), This.t()} | {:error, atom, This.t()}
+  def fetch_state(this, room_id, event_type, state_key, user) do
+    case Rooms.fetch_state(this.rooms, room_id, event_type, state_key, user) do
+      {:error, error} ->
+        {:error, error, this}
+
+      {:ok, state, rooms} ->
+        {:ok, state, %This{this | rooms: rooms}}
+    end
+  end
+
+  @spec fetch_all_state(This.t(), Identifier.room(), Identifier.user()) ::
+          {:ok, [State.t()], This.t()} | {:error, atom, This.t()}
+  def fetch_all_state(this, room_id, user) do
+    case Rooms.fetch_all_state(this.rooms, room_id, user) do
+      {:error, error} ->
+        {:error, error, this}
+
+      {:ok, state, rooms} ->
+        {:ok, state, %This{this | rooms: rooms}}
     end
   end
 

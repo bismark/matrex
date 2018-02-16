@@ -25,6 +25,7 @@ defmodule Matrex.Errors do
   defp error(:forbidden), do: "M_FORBIDDEN"
   defp error(:missing_token), do: "M_MISSING_TOKEN"
   defp error(:unknown_token), do: "M_UNKNOWN_TOKEN"
+  defp error(:not_found), do: "M_NOT_FOUND"
   defp error(_), do: "M_UNRECOGNIZED"
 
   @spec status_code(error) :: integer
@@ -36,6 +37,7 @@ defmodule Matrex.Errors do
   defp status_code(:forbidden), do: 403
   defp status_code(:missing_token), do: 401
   defp status_code(:unknown_token), do: 401
+  defp status_code(:not_found), do: 404
   defp status_code(_), do: 500
 
   @spec message(error) :: String.t
@@ -47,6 +49,7 @@ defmodule Matrex.Errors do
   defp message(:forbidden), do: "Forbidden"
   defp message(:missing_token), do: "Access token missing"
   defp message(:unknown_token), do: "Unknown access token"
+  defp message(:not_found), do: "Not found"
   defp message(_), do: "Unknown Error"
 
 
