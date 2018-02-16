@@ -1,8 +1,8 @@
-defmodule Matrex.Plugs.RequireAccessToken do
+defmodule MatrexWeb.Plugs.RequireAccessToken do
   alias Plug.Conn
 
   import Matrex.Validation
-  import Matrex.Errors
+  import MatrexWeb.Errors
 
   def init(options), do: options
 

@@ -1,4 +1,4 @@
-defmodule Matrex.Endpoint do
+defmodule MatrexWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :matrex
 
   # Code reloading can be explicitly enabled under the
@@ -22,5 +22,5 @@ defmodule Matrex.Endpoint do
 
   plug(CORSPlug)
 
-  plug(Matrex.Router)
+  plug(MatrexWeb.Router)
 end

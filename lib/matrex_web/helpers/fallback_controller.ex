@@ -1,5 +1,5 @@
-defmodule Matrex.FallbackController do
-  use Matrex.Web, :controller
+defmodule MatrexWeb.FallbackController do
+  use MatrexWeb, :controller
 
   def call(conn, {:ok, res}) do
     json(conn, res)

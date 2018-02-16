@@ -18,11 +18,11 @@ defmodule Matrex.Mixfile do
   #
   # Type `mix help compile.app` for more information.
   def application do
-    [mod: {Matrex, []}, extra_applications: [:logger]]
+    [mod: {Matrex.Application, []}, extra_applications: [:logger]]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "web", "test/support"]
-  defp elixirc_paths(_), do: ["lib", "web"]
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp deps do
     [

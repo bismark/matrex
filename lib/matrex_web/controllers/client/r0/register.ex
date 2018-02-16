@@ -1,5 +1,5 @@
-defmodule Matrex.Controllers.Client.R0.Register do
-  use Matrex.Web, :controller
+defmodule MatrexWeb.Controllers.Client.R0.Register do
+  use MatrexWeb, :controller
 
   import Matrex.Validation
 
@@ -44,7 +44,7 @@ defmodule Matrex.Controllers.Client.R0.Register do
   end
 
   defp check_username(username) do
-    user_id = Identifier.new(:user, username, Matrex.hostname())
+    user_id = Identifier.new(:user, username, Matrex.Application.hostname())
 
     case Identifier.valid?(user_id) do
       true -> {:ok, user_id}

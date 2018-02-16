@@ -1,4 +1,4 @@
-defmodule Matrex.Errors do
+defmodule MatrexWeb.Errors do
   import Phoenix.Controller, only: [json: 2]
   alias Plug.Conn
 

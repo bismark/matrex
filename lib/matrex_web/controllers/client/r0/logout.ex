@@ -1,5 +1,5 @@
-defmodule Matrex.Controllers.Client.R0.Logout do
-  use Matrex.Web, :authed_controller
+defmodule MatrexWeb.Controllers.Client.R0.Logout do
+  use MatrexWeb, :authed_controller
 
   alias Matrex.DB
 

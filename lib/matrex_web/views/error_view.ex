@@ -1,5 +1,5 @@
-defmodule Matrex.ErrorView do
-  use Matrex.Web, :view
+defmodule MatrexWeb.ErrorView do
+  use MatrexWeb, :view
 
   def render("404.json", _assigns) do
     %{errors: %{detail: "Page not found"}}

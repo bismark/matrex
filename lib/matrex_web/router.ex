@@ -1,8 +1,8 @@
-defmodule Matrex.Router do
-  use Matrex.Web, :router
+defmodule MatrexWeb.Router do
+  use MatrexWeb, :router
 
-  alias Matrex.Controllers.Client
-  alias Matrex.Plugs.RequireAccessToken
+  alias MatrexWeb.Controllers.Client
+  alias MatrexWeb.Plugs.RequireAccessToken
 
   pipeline :api do
     plug(:accepts, ["json"])

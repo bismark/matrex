@@ -8,11 +8,11 @@ use Mix.Config
 hostname = "localhost"
 
 # Configures the endpoint
-config :matrex, Matrex.Endpoint,
+config :matrex, MatrexWeb.Endpoint,
   url: [host: hostname],
   secret_key_base: "sYxF7J03ixE4Uuzg67OByfLda8Yg7itDVtAvSQcKnLsWzmJi68iXjaVvXFbK0p4t",
-  render_errors: [view: Matrex.ErrorView, accepts: ~w(json)],
-  pubsub: [name: Matrex.PubSub, adapter: Phoenix.PubSub.PG2]
+  render_errors: [view: MatrexWeb.ErrorView, accepts: ~w(json)],
+  pubsub: [name: MatrexWeb.PubSub, adapter: Phoenix.PubSub.PG2]
 
 # Configures Elixir's Logger
 config :logger, :console,

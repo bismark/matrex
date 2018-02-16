@@ -48,7 +48,7 @@ defmodule Matrex.Identifier do
   def new(type, localpart, hostname \\ nil) do
     hostname =
       case hostname do
-        nil -> Matrex.hostname()
+        nil -> Matrex.Application.hostname()
         _ -> hostname
       end
 
@@ -57,7 +57,7 @@ defmodule Matrex.Identifier do
 
   def generate(type) do
     localpart = @valid_chars |> Enum.take_random(@id_length) |> Enum.join()
-    %This{type: type, localpart: localpart, hostname: Matrex.hostname()}
+    %This{type: type, localpart: localpart, hostname: Matrex.Application.hostname()}
   end
 
   def valid?(%This{} = this) do

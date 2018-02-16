@@ -1,4 +1,4 @@
-defmodule Matrex.Web.Helpers do
+defmodule MatrexWeb.Helpers do
   alias Matrex.Identifier
 
   @spec parse_room_id(String.t()) :: {:ok, Identifier.room()} | {:error, term}

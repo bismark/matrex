@@ -1,4 +1,4 @@
-defmodule Matrex.ChannelCase do
+defmodule MatrexWeb.ChannelCase do
   @moduledoc """
   This module defines the test case to be used by
   channel tests.
@@ -21,7 +21,7 @@ defmodule Matrex.ChannelCase do
       use Phoenix.ChannelTest
 
       # The default endpoint for testing
-      @endpoint Matrex.Endpoint
+      @endpoint MatrexWeb.Endpoint
     end
   end
 

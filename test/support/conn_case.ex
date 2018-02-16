@@ -1,4 +1,4 @@
-defmodule Matrex.ConnCase do
+defmodule MatrexWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by
   tests that require setting up a connection.
@@ -20,10 +20,10 @@ defmodule Matrex.ConnCase do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
 
-      import Matrex.Router.Helpers
+      import MatrexWeb.Router.Helpers
 
       # The default endpoint for testing
-      @endpoint Matrex.Endpoint
+      @endpoint MatrexWeb.Endpoint
     end
   end
 

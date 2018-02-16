@@ -1,10 +1,10 @@
-defmodule Matrex do
+defmodule Matrex.Application do
   use Application
 
   def start(_type, _args) do
     children = [
       Matrex.DB,
-      Matrex.Endpoint
+      MatrexWeb.Endpoint
     ]
 
     opts = [strategy: :one_for_one, name: Matrex.Supervisor]
@@ -12,7 +12,7 @@ defmodule Matrex do
   end
 
   def config_change(changed, _new, removed) do
-    Matrex.Endpoint.config_change(changed, removed)
+    MatrexWeb.Endpoint.config_change(changed, removed)
     :ok
   end
 

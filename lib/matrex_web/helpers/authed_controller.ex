@@ -1,7 +1,7 @@
-defmodule Matrex.AuthedController do
+defmodule MatrexWeb.AuthedController do
   defmacro __using__(_) do
     quote do
-      def action(conn, _), do: Matrex.AuthedController.__action__(__MODULE__, conn)
+      def action(conn, _), do: MatrexWeb.AuthedController.__action__(__MODULE__, conn)
       defoverridable action: 2
     end
   end

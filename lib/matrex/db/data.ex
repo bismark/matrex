@@ -183,7 +183,7 @@ defmodule Matrex.DB.Data do
   @spec generate_user_id(integer, map) :: {integer, Identifier.user()}
 
   defp generate_user_id(id, accounts) do
-    user_id = Identifier.new(:user, Integer.to_string(id), Matrex.hostname())
+    user_id = Identifier.new(:user, Integer.to_string(id), Matrex.Application.hostname())
 
     if Map.has_key?(accounts, user_id) do
       generate_user_id(id + 1, accounts)

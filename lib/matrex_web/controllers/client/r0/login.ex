@@ -1,5 +1,5 @@
-defmodule Matrex.Controllers.Client.R0.Login do
-  use Matrex.Web, :controller
+defmodule MatrexWeb.Controllers.Client.R0.Login do
+  use MatrexWeb, :controller
 
   import Matrex.Validation
 
