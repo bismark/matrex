@@ -24,7 +24,7 @@ defmodule Matrex.Models.RoomTest do
     assert state_create_event == create_event
     assert actor_id == state_create_event.content["creator"]
 
-    key = {"m.room.member", actor_id}
+    key = {"m.room.member", Identifier.fqid(actor_id)}
     assert Map.has_key?(room.state, key)
     state_member_event = Map.fetch!(room.state, key)
     assert state_member_event == member_event
@@ -50,7 +50,7 @@ defmodule Matrex.Models.RoomTest do
 
     assert [member_event | _] = room.events
 
-    key = {"m.room.member", user}
+    key = {"m.room.member", Identifier.fqid(user)}
     assert Map.has_key?(room.state, key)
     state_member_event = Map.fetch!(room.state, key)
     assert state_member_event == member_event
@@ -71,7 +71,9 @@ defmodule Matrex.Models.RoomTest do
            } = content
 
     content = %{"membership" => "leave"}
-    assert {:ok, _, room} = Room.send_state(room, user, "m.room.member", user, content)
+
+    assert {:ok, _, room} =
+             Room.send_state(room, user, "m.room.member", Identifier.fqid(user), content)
 
     {:ok, content, room} = Room.fetch_state(room, "m.room.join_rules", "", user)
 
