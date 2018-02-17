@@ -6,6 +6,7 @@ defmodule MatrexWeb.Controllers.Client.R0.Rooms.State do
   alias Matrex.DB
   alias Matrex.Validation.StateContent, as: StateContentValidation
   alias Matrex.Events.Event
+  alias Matrex.Identifier
 
   def get_all(_conn, params, access_token) do
     with {:ok, args} <- parse_get_all_args(params),
@@ -45,7 +46,15 @@ defmodule MatrexWeb.Controllers.Client.R0.Rooms.State do
 
     with {:ok, acc} <- required(:room_id, params, acc, type: :string, post: &parse_room_id/1),
          {:ok, acc} <- required(:event_type, params, acc, type: :string),
-         {:ok, acc} <- optional(:state_key, params, acc, type: :string, default: ""),
+         {:ok, acc} <-
+           optional(
+             :state_key,
+             params,
+             acc,
+             type: :string,
+             default: "",
+             post: &parse_identifier/1
+           ),
          do: {:ok, acc}
   end
 
@@ -56,10 +65,25 @@ defmodule MatrexWeb.Controllers.Client.R0.Rooms.State do
 
     with {:ok, acc} <- required(:room_id, url_params, acc, type: :string, post: &parse_room_id/1),
          {:ok, acc} <- required(:state_event_type, url_params, acc, type: :string),
-         {:ok, acc} <- optional(:state_key, url_params, acc, type: :string, default: ""),
+         {:ok, acc} <-
+           optional(
+             :state_key,
+             url_params,
+             acc,
+             type: :string,
+             default: "",
+             post: &parse_identifier/1
+           ),
          {:ok, content} <-
            StateContentValidation.parse_content(acc.state_event_type, body, acc.state_key),
          acc = Map.put(acc, :content, content),
          do: {:ok, acc}
+  end
+
+  defp parse_identifier(state_key) do
+    case Identifier.parse(state_key) do
+      {:ok, state_key} -> {:ok, state_key}
+      :error -> {:ok, state_key}
+    end
   end
 end

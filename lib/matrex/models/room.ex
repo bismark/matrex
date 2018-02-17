@@ -30,7 +30,7 @@ defmodule Matrex.Models.Room do
 
     # TODO is this correct behaviour?
     join_content = %{"membership" => "join"}
-    join_event = State.create(id, actor, join_content, "m.room.member", Identifier.fqid(actor))
+    join_event = State.create(id, actor, join_content, "m.room.member", actor)
 
     rest_events =
       rest
@@ -58,8 +58,7 @@ defmodule Matrex.Models.Room do
 
       "public" ->
         content = %{"membership" => "join"}
-        state_key = Identifier.fqid(user)
-        event = State.create(this.id, user, content, "m.room.member", state_key)
+        event = State.create(this.id, user, content, "m.room.member", user)
         this = update_state(this, event)
         {:ok, this}
     end
@@ -152,7 +151,7 @@ defmodule Matrex.Models.Room do
 
   @spec membership(state, Identifier.user()) :: String.t() | nil
   defp membership(state, user) do
-    key = {"m.room.member", Identifier.fqid(user)}
+    key = {"m.room.member", user}
 
     case Map.fetch(state, key) do
       :error -> nil
@@ -168,10 +167,8 @@ defmodule Matrex.Models.Room do
   end
 
   defp get_state_when_left(this, user) do
-    state_key = Identifier.fqid(user)
-
     Enum.reduce_while(this.events, this.state, fn
-      %State{type: "m.room.member", state_key: ^state_key}, state ->
+      %State{type: "m.room.member", state_key: ^user}, state ->
         {:halt, state}
 
       state_event = %State{prev_state: nil}, state ->

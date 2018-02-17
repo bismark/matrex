@@ -81,7 +81,7 @@ defmodule Matrex.Identifier do
   @spec parse(String.t()) :: {:ok, This.t()} | :error
   def parse(id) do
     with {:ok, type, id} <- type_from_sigil(id) do
-      [localpart | hostname] = String.split(id, ":", parts: 2, trim: true)
+      [localpart, hostname] = String.split(id, ":", parts: 2, trim: true)
       {:ok, new(type, localpart, hostname)}
     end
   end
