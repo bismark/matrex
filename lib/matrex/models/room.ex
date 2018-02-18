@@ -123,6 +123,24 @@ defmodule Matrex.Models.Room do
     end
   end
 
+  @spec fetch_members(This.t(), String.t() | nil, Identifier.user()) ::
+          {:ok, [State.t()], This.t()} | {:error, atom}
+  def fetch_members(this, filter, user) do
+    case membership(this.state, user) do
+      "join" ->
+        res = get_members(this.state, filter)
+        {:ok, res, this}
+
+      "left" ->
+        state = get_state_when_left(this, user)
+        res = get_members(state, filter)
+        {:ok, res, this}
+
+      _ ->
+        {:error, :forbidden}
+    end
+  end
+
   # Private Functions
 
   @spec update_state(This.t(), State.t()) :: This.t()
@@ -180,5 +198,26 @@ defmodule Matrex.Models.Room do
       _, state ->
         {:cont, state}
     end)
+  end
+
+  defp get_members(state, filter) do
+    filter_fun =
+      case filter do
+        nil ->
+          fn
+            {{"m.room.member", _}, _} -> true
+            _ -> false
+          end
+
+        filter ->
+          fn
+            {{"m.room.member", _}, %State{content: %{"membership" => ^filter}}} -> true
+            _ -> false
+          end
+      end
+
+    state
+    |> Enum.filter(filter_fun)
+    |> Enum.map(&elem(&1, 1))
   end
 end

@@ -40,6 +40,9 @@ defmodule MatrexWeb.Router do
         get("/state/:event_type/:state_key", State, :get)
         put("/state/:state_event_type", State, :put)
         put("/state/:state_event_type/:state_key", State, :put)
+
+        get("/members", Members, :get)
+        get("/joined_members", Members, :get_joined)
       end
     end
   end

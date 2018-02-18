@@ -94,6 +94,18 @@ defmodule Matrex.DB.Data do
     end
   end
 
+  @spec fetch_members(This.t(), Identifier.room(), String.t() | nil, Identifier.user()) ::
+          {:ok, [%State{}], This.t()} | {:error, atom, This.t()}
+  def fetch_members(this, room_id, filter, user) do
+    case Rooms.fetch_members(this.rooms, room_id, filter, user) do
+      {:error, error} ->
+        {:error, error, this}
+
+      {:ok, state, rooms} ->
+        {:ok, state, %This{this | rooms: rooms}}
+    end
+  end
+
   ### Auth ###
 
   @spec logout(This.t(), Sessions.token()) :: {:ok, This.t()} | {:error, atom, This.t()}

@@ -115,6 +115,15 @@ defmodule Matrex.DB do
     end)
   end
 
+  @spec fetch_members(Identifier.room(), Sessions.token()) :: {:ok, [State.t()]} | {:error, atom}
+  @spec fetch_members(Identifier.room(), Sessions.token(), String.t() | nil) ::
+          {:ok, [State.t()]} | {:error, atom}
+  def fetch_members(room_id, access_token, filter \\ nil) do
+    auth_perform(access_token, fn this, user ->
+      Data.fetch_members(this, room_id, filter, user)
+    end)
+  end
+
   # Internal Functions
 
   @spec auth_perform(Sessions.token(), auth_function) :: {:ok, any} | {:error, atom}

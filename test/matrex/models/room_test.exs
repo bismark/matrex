@@ -92,6 +92,26 @@ defmodule Matrex.Models.RoomTest do
            } = content
   end
 
+  test "fetch members" do
+    creator = Identifier.generate(:user)
+    room = create_room("public", creator)
+    user = Identifier.generate(:user)
+    assert {:ok, room} = Room.join(room, user)
+
+    {:ok, state, _room} = Room.fetch_members(room, nil, user)
+    assert 2 = length(state)
+
+    content = %{"membership" => "leave"}
+
+    assert {:ok, _, room} = Room.send_state(room, user, "m.room.member", user, content)
+
+    {:ok, state, _room} = Room.fetch_members(room, nil, creator)
+    assert 2 = length(state)
+
+    {:ok, state, _room} = Room.fetch_members(room, "join", creator)
+    assert 1 = length(state)
+  end
+
   defp create_room(join_rule \\ "invite", actor \\ nil) do
     room_id = Identifier.generate(:room)
     actor_id = actor || Identifier.generate(:user)

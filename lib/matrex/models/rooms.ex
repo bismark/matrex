@@ -65,6 +65,14 @@ defmodule Matrex.Models.Rooms do
     end
   end
 
+  @spec fetch_members(This.t(), Identifier.room(), String.t() | nil, Identifier.user()) ::
+          {:ok, [State.t()], This.t()} | {:error, atom}
+  def fetch_members(this, room_id, filter, user) do
+    with {:ok, room} <- fetch_room(this, room_id),
+         {:ok, state, room} <- Room.fetch_members(room, filter, user),
+         do: {:ok, state, Map.put(this, room_id, room)}
+  end
+
   # Internal Funcs
 
   @spec fetch_room(This.t(), Identifier.room()) :: {:ok, Room.t()} | {:error, :forbidden}
