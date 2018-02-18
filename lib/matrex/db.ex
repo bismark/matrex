@@ -16,7 +16,16 @@ defmodule Matrex.DB do
   end
 
   def start_link(_) do
-    Agent.start_link(fn -> %Data{} end, name: This)
+    Agent.start_link(
+      fn ->
+        if Application.get_env(:matrex, :load_fixtures) do
+          Agent.cast(This, &load_fixtures/1)
+        end
+
+        %Data{}
+      end,
+      name: This
+    )
   end
 
   @spec login(Identifier.user(), String.t()) ::
@@ -153,4 +162,12 @@ defmodule Matrex.DB do
   defp wrap_result({:error, error, data}), do: {{:error, error}, data}
 
   defp wrap_result({:ok, res, data}), do: {{:ok, res}, data}
+
+  defp load_fixtures(data) do
+    user_id = Identifier.new(:user, "tester", Matrex.Application.hostname())
+    passhash = Account.hash_password("password")
+    {:ok, user, data} = Data.register(data, user_id, passhash)
+    IO.inspect(user)
+    data
+  end
 end
