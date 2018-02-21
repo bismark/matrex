@@ -124,6 +124,20 @@ defmodule Matrex.DB do
     end)
   end
 
+  @spec create_filter(UserFilter.t(), Sessions.token()) :: {:ok, String.t()} | {:error, atom}
+  def create_filter(filter, access_token) do
+    auth_perform(access_token, fn this, user ->
+      Data.create_filter(this, filter, user)
+    end)
+  end
+
+  @spec get_filter(String.t(), Sessions.token()) :: {:ok, UserFilter.t()} | {:error, atom}
+  def get_filter(filter_id, access_token) do
+    auth_perform(access_token, fn this, user ->
+      Data.get_filter(this, filter_id, user)
+    end)
+  end
+
   # Internal Functions
 
   @spec auth_perform(Sessions.token(), auth_function) :: {:ok, any} | {:error, atom}

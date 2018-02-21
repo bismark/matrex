@@ -1,20 +1,24 @@
 defmodule Matrex.DB.Data do
   alias __MODULE__, as: This
-  alias Matrex.Models.{Account, Sessions, Rooms}
+  alias Matrex.Models.{Account, Sessions, Rooms, UserFilter}
   alias Matrex.Identifier
   alias Matrex.Events.State
 
   @type t :: %This{
-          accounts: %{Identifier.user() => Account.t()},
+          accounts: %{optional(Identifier.user()) => Account.t()},
           sessions: Sessions.t(),
           rooms: Rooms.t(),
-          next_generated_user_id: integer
+          next_generated_user_id: integer,
+          filters: %{optional(Identifier.user()) => %{optional(String.t()) => UserFilter.t()}}
         }
 
-  defstruct accounts: %{},
-            sessions: %Sessions{},
-            rooms: Rooms.new(),
-            next_generated_user_id: 1
+  defstruct(
+    accounts: %{},
+    sessions: %Sessions{},
+    rooms: Rooms.new(),
+    next_generated_user_id: 1,
+    filters: %{}
+  )
 
   ### Rooms ###
 
@@ -181,6 +185,27 @@ defmodule Matrex.DB.Data do
 
   def fetch_account(this, user_id) do
     Map.fetch(this.accounts, user_id)
+  end
+
+  @spec create_filter(This.t(), UserFilter.t(), Identifier.user()) :: {:ok, String.t(), This.t()}
+  def create_filter(this, filter, user_id) do
+    filter_id = Base.url_encode64(:crypto.strong_rand_bytes(8))
+
+    filters =
+      Map.update(this.filters, user_id, %{filter_id => filter}, fn filters ->
+        Map.put(filters, filter_id, filter)
+      end)
+
+    {:ok, filter_id, %This{this | filters: filters}}
+  end
+
+  @spec get_filter(This.t(), String.t(), Identifier.user()) ::
+          {:ok, UserFilter.t(), This.t()} | {:error, atom, This.t()}
+  def get_filter(this, filter_id, user_id) do
+    case get_in(this.filters, [user_id, filter_id]) do
+      nil -> {:error, :not_found, this}
+      filter -> {:ok, filter, this}
+    end
   end
 
   ### Internal Functions ###

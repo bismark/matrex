@@ -44,6 +44,11 @@ defmodule MatrexWeb.Router do
         get("/members", Members, :get)
         get("/joined_members", Members, :get_joined)
       end
+
+      scope "/user/:user_id", User do
+        post("/filter", Filter, :post)
+        post("/filter/:filter_id", Filter, :get)
+      end
     end
   end
 end

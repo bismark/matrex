@@ -33,5 +33,4 @@ defmodule MatrexWeb.Controllers.Client.R0.Rooms.Members do
       Map.put(acc, Identifier.fqid(user), %{})
     end)
   end
-
 end
