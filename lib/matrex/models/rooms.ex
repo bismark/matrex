@@ -8,37 +8,47 @@ defmodule Matrex.Models.Rooms do
 
   def new, do: %{}
 
-  @spec create(This.t(), map, Identifier.user()) :: {Identifier.room(), This.t()}
-  def create(this, contents, actor) do
+  @spec create(This.t(), integer, map, Identifier.user()) ::
+          {Identifier.room(), {integer, This.t()}}
+  def create(this, next_event_id, contents, actor) do
     id = generate_room_id(this)
-    room = Room.new(id, contents, actor)
+    room = Room.new(id, next_event_id, contents, actor)
     {room.id, Map.put(this, id, room)}
   end
 
-  @spec join_room(This.t(), Identifier.room(), Identifier.user()) ::
+  @spec join_room(This.t(), Identifier.room(), integer, Identifier.user()) ::
           {:ok, This.t()} | {:error, atom}
-  def join_room(this, room_id, user) do
+  def join_room(this, room_id, next_event_id, user) do
     with {:ok, room} <- fetch_room(this, room_id),
-         {:ok, room} <- Room.join(room, user) do
-      {:ok, Map.put(this, room_id, room)}
+         {:ok, room, next_event_id} <- Room.join(room, next_event_id, user) do
+      {:ok, {Map.put(this, room_id, room), next_event_id}}
     end
   end
 
-  @spec send_state(This.t(), Identifier.room(), Identifier.user(), String.t(), String.t(), map) ::
-          {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_state(this, room_id, user, event_type, state_key, content) do
+  @spec send_state(
+          This.t(),
+          Identifier.room(),
+          integer,
+          Identifier.user(),
+          String.t(),
+          String.t(),
+          map
+        ) :: {:ok, Identifier.event(), This.t()} | {:error, atom}
+  def send_state(this, room_id, next_event_id, user, event_type, state_key, content) do
     with {:ok, room} <- fetch_room(this, room_id),
-         {:ok, event_id, room} <- Room.send_state(room, user, event_type, state_key, content) do
-      {:ok, event_id, Map.put(this, room_id, room)}
+         {:ok, event_id, room, next_event_id} <-
+           Room.send_state(room, next_event_id, user, event_type, state_key, content) do
+      {:ok, event_id, {Map.put(this, room_id, room), next_event_id}}
     end
   end
 
-  @spec send_event(This.t(), Identifier.room(), Identifier.user(), String.t(), map) ::
+  @spec send_event(This.t(), Identifier.room(), integer, Identifier.user(), String.t(), map) ::
           {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_event(this, room_id, user, event_type, content) do
+  def send_event(this, room_id, next_event_id, user, event_type, content) do
     with {:ok, room} <- fetch_room(this, room_id),
-         {:ok, event_id, room} <- Room.send_event(room, user, event_type, content) do
-      {:ok, event_id, Map.put(this, room_id, room)}
+         {:ok, event_id, room, next_event_id} <-
+           Room.send_event(room, next_event_id, user, event_type, content) do
+      {:ok, event_id, {Map.put(this, room_id, room), next_event_id}}
     end
   end
 

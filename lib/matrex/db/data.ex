@@ -9,6 +9,7 @@ defmodule Matrex.DB.Data do
           sessions: Sessions.t(),
           rooms: Rooms.t(),
           next_generated_user_id: integer,
+          next_event_id: integer,
           filters: %{optional(Identifier.user()) => %{optional(String.t()) => UserFilter.t()}}
         }
 
@@ -17,6 +18,7 @@ defmodule Matrex.DB.Data do
     sessions: %Sessions{},
     rooms: Rooms.new(),
     next_generated_user_id: 1,
+    next_event_id: 1,
     filters: %{}
   )
 
@@ -26,20 +28,22 @@ defmodule Matrex.DB.Data do
           {:ok, Identifier.room(), This.t()} | {:error, atom, This.t()}
 
   def create_room(this, contents, user) do
-    {room_id, rooms} = Rooms.create(this.rooms, contents, user)
-    {:ok, room_id, %This{this | rooms: rooms}}
+    {room_id, {next_event_id, rooms}} =
+      Rooms.create(this.rooms, this.next_event_id, contents, user)
+
+    {:ok, room_id, %This{this | rooms: rooms, next_event_id: next_event_id}}
   end
 
   @spec join_room(This.t(), Identifier.room(), Identifier.user()) ::
           {:ok, Identifier.room(), This.t()} | {:error, atom, This.t()}
 
   def join_room(this, room_id, user) do
-    case Rooms.join_room(this.rooms, room_id, user) do
+    case Rooms.join_room(this.rooms, this.next_event_id, room_id, user) do
       {:error, error} ->
         {:error, error, this}
 
-      {:ok, rooms} ->
-        {:ok, room_id, %This{this | rooms: rooms}}
+      {:ok, {rooms, next_event_id}} ->
+        {:ok, room_id, %This{this | rooms: rooms, next_event_id: next_event_id}}
     end
   end
 
@@ -47,12 +51,20 @@ defmodule Matrex.DB.Data do
           {:ok, Identifier.event(), This.t()} | {:error, atom, This.t()}
 
   def send_state(this, room_id, user, event_type, state_key, content) do
-    case Rooms.send_state(this.rooms, room_id, user, event_type, state_key, content) do
+    case Rooms.send_state(
+           this.rooms,
+           this.next_event_id,
+           room_id,
+           user,
+           event_type,
+           state_key,
+           content
+         ) do
       {:error, error} ->
         {:error, error, this}
 
-      {:ok, event_id, rooms} ->
-        {:ok, event_id, %This{this | rooms: rooms}}
+      {:ok, event_id, {next_event_id, rooms}} ->
+        {:ok, event_id, %This{this | rooms: rooms, next_event_id: next_event_id}}
     end
   end
 
@@ -60,12 +72,12 @@ defmodule Matrex.DB.Data do
           {:ok, Identifier.event(), This.t()} | {:error, atom, This.t()}
 
   def send_event(this, room_id, user, event_type, content) do
-    case Rooms.send_event(this.rooms, room_id, user, event_type, content) do
+    case Rooms.send_event(this.rooms, this.next_event_id, room_id, user, event_type, content) do
       {:error, error} ->
         {:error, error, this}
 
-      {:ok, event_id, rooms} ->
-        {:ok, event_id, %This{this | rooms: rooms}}
+      {:ok, event_id, {next_event_id, rooms}} ->
+        {:ok, event_id, %This{this | rooms: rooms, next_event_id: next_event_id}}
     end
   end
 

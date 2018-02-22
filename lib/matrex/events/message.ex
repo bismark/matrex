@@ -23,9 +23,9 @@ defmodule Matrex.Events.Message do
     :type
   ]
 
-  def create(room_id, sender, content, type) do
+  def create(event_id, room_id, sender, content, type) do
     %This{
-      event_id: Identifier.generate(:event),
+      event_id: Identifier.new(:event, event_id),
       room_id: room_id,
       sender: sender,
       origin_server_ts: Utils.timestamp(),

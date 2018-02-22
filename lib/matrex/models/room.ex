@@ -21,24 +21,24 @@ defmodule Matrex.Models.Room do
     :events
   ]
 
-  @spec new(Identifier.room(), map, Identifier.user()) :: This.t()
-  def new(id, contents, actor) do
+  @spec new(Identifier.room(), integer, map, Identifier.user()) :: {This.t(), integer}
+  def new(id, event_id, contents, actor) do
     create_key = {"m.room.create", ""}
     {create_content, rest} = Map.pop(contents, create_key)
     create_content = Map.put(create_content, "creator", actor)
-    create_event = State.create(id, actor, create_content, "m.room.create")
+    create_event = State.create(event_id, id, actor, create_content, "m.room.create")
+    event_id = event_id + 1
 
     # TODO is this correct behaviour?
     join_content = %{"membership" => "join"}
-    join_event = State.create(id, actor, join_content, "m.room.member", actor)
+    join_event = State.create(event_id, id, actor, join_content, "m.room.member", actor)
+    event_id = event_id + 1
 
-    rest_events =
-      rest
-      |> Enum.map(fn {{type, state_key}, content} ->
-        event = State.create(id, actor, content, type, state_key)
-        {{type, state_key}, event}
+    {event_id, rest_events} =
+      Enum.reduce(rest, {event_id, %{}}, fn {{type, state_key}, content}, {event_id, acc} ->
+        event = State.create(event_id, id, actor, content, type, state_key)
+        {event_id + 1, Map.put(acc, {type, state_key}, event)}
       end)
-      |> Enum.into(%{})
 
     events = Map.values(rest_events) ++ [join_event, create_event]
 
@@ -47,44 +47,45 @@ defmodule Matrex.Models.Room do
       |> Map.put(create_key, create_event)
       |> Map.put(State.key(join_event), join_event)
 
-    %This{id: id, events: events, state: state}
+    {%This{id: id, events: events, state: state}, event_id}
   end
 
-  @spec join(This.t(), Identifier.user()) :: {:ok, This.t()} | {:error, term}
-  def join(this, user) do
+  @spec join(This.t(), integer, Identifier.user()) :: {:ok, This.t(), integer} | {:error, term}
+  def join(this, event_id, user) do
     case join_rule(this.state) do
       "invite" ->
         {:error, :forbidden}
 
       "public" ->
         content = %{"membership" => "join"}
-        event = State.create(this.id, user, content, "m.room.member", user)
+        event = State.create(event_id, this.id, user, content, "m.room.member", user)
+        event_id = event_id + 1
         this = update_state(this, event)
-        {:ok, this}
+        {:ok, this, event_id}
     end
   end
 
-  @spec send_state(This.t(), Identifier.user(), String.t(), String.t(), map) ::
-          {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_state(this, user, event_type, state_key, content) do
+  @spec send_state(This.t(), integer, Identifier.user(), String.t(), String.t(), map) ::
+          {:ok, Identifier.event(), This.t(), integer} | {:error, atom}
+  def send_state(this, event_id, user, event_type, state_key, content) do
     case membership(this.state, user) do
       "join" ->
-        event = State.create(this.id, user, content, event_type, state_key)
-        {:ok, event.event_id, update_state(this, event)}
+        event = State.create(event_id, this.id, user, content, event_type, state_key)
+        {:ok, event.event_id, update_state(this, event), event_id + 1}
 
       _ ->
         {:error, :forbidden}
     end
   end
 
-  @spec send_event(This.t(), Identifier.user(), String.t(), map) ::
-          {:ok, Identifier.event(), This.t()} | {:error, atom}
-  def send_event(this, user, event_type, content) do
+  @spec send_event(This.t(), integer, Identifier.user(), String.t(), map) ::
+          {:ok, Identifier.event(), This.t(), integer} | {:error, atom}
+  def send_event(this, event_id, user, event_type, content) do
     case membership(this.state, user) do
       "join" ->
-        event = Message.create(this.id, user, content, event_type)
+        event = Message.create(event_id, this.id, user, content, event_type)
         events = [event | this.events]
-        {:ok, event.event_id, %This{this | events: [event | events]}}
+        {:ok, event.event_id, %This{this | events: [event | events]}, event_id + 1}
 
       _ ->
         {:error, :forbidden}

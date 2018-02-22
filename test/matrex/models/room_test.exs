@@ -13,7 +13,7 @@ defmodule Matrex.Models.RoomTest do
       {"m.room.join_rules", ""} => %{"join_rule" => "invite"}
     }
 
-    room = Room.new(room_id, content, actor_id)
+    {room, 4} = Room.new(room_id, 1, content, actor_id)
 
     assert room_id == room.id
     assert [join_rules_event, member_event, create_event] = room.events
@@ -38,15 +38,15 @@ defmodule Matrex.Models.RoomTest do
   end
 
   test "join invite room" do
-    room = create_room()
+    {room, 4} = create_room()
     user = Identifier.generate(:user)
-    assert {:error, :forbidden} = Room.join(room, user)
+    assert {:error, :forbidden} = Room.join(room, 4, user)
   end
 
   test "join public room" do
-    room = create_room("public")
+    {room, 4} = create_room("public")
     user = Identifier.generate(:user)
-    assert {:ok, room} = Room.join(room, user)
+    assert {:ok, room, 5} = Room.join(room, 4, user)
 
     assert [member_event | _] = room.events
 
@@ -59,9 +59,9 @@ defmodule Matrex.Models.RoomTest do
 
   test "fetch state" do
     creator = Identifier.generate(:user)
-    room = create_room("public", creator)
+    assert {room, 4} = create_room("public", creator)
     user = Identifier.generate(:user)
-    assert {:ok, room} = Room.join(room, user)
+    assert {:ok, room, 5} = Room.join(room, 4, user)
 
     {:ok, content, room} = Room.fetch_state(room, "m.room.join_rules", "", user)
 
@@ -72,7 +72,7 @@ defmodule Matrex.Models.RoomTest do
 
     content = %{"membership" => "leave"}
 
-    assert {:ok, _, room} = Room.send_state(room, user, "m.room.member", user, content)
+    assert {:ok, _, room, 6} = Room.send_state(room, 5, user, "m.room.member", user, content)
 
     {:ok, content, room} = Room.fetch_state(room, "m.room.join_rules", "", user)
 
@@ -82,7 +82,7 @@ defmodule Matrex.Models.RoomTest do
            } = content
 
     content = %{"join_rule" => "invite"}
-    assert {:ok, _, room} = Room.send_state(room, creator, "m.room.join_rules", "", content)
+    assert {:ok, _, room, 7} = Room.send_state(room, 6, creator, "m.room.join_rules", "", content)
 
     {:ok, content, _room} = Room.fetch_state(room, "m.room.join_rules", "", user)
 
@@ -94,16 +94,16 @@ defmodule Matrex.Models.RoomTest do
 
   test "fetch members" do
     creator = Identifier.generate(:user)
-    room = create_room("public", creator)
+    {room, 4} = create_room("public", creator)
     user = Identifier.generate(:user)
-    assert {:ok, room} = Room.join(room, user)
+    assert {:ok, room, 5} = Room.join(room, 4, user)
 
     {:ok, state, _room} = Room.fetch_members(room, nil, user)
     assert 2 = length(state)
 
     content = %{"membership" => "leave"}
 
-    assert {:ok, _, room} = Room.send_state(room, user, "m.room.member", user, content)
+    assert {:ok, _, room, 5} = Room.send_state(room, 4, user, "m.room.member", user, content)
 
     {:ok, state, _room} = Room.fetch_members(room, nil, creator)
     assert 2 = length(state)
@@ -112,7 +112,7 @@ defmodule Matrex.Models.RoomTest do
     assert 1 = length(state)
   end
 
-  defp create_room(join_rule \\ "invite", actor \\ nil) do
+  defp create_room(join_rule \\ "invite", actor \\ nil, event_id \\ 1) do
     room_id = Identifier.generate(:room)
     actor_id = actor || Identifier.generate(:user)
 
@@ -121,6 +121,6 @@ defmodule Matrex.Models.RoomTest do
       {"m.room.join_rules", ""} => %{"join_rule" => join_rule}
     }
 
-    Room.new(room_id, content, actor_id)
+    Room.new(room_id, event_id, content, actor_id)
   end
 end
